@@ -30,7 +30,7 @@ export function NicknamePage({ onDone }: Props) {
       alignItems: "center", justifyContent: "center", padding: "40px 32px",
       background: "linear-gradient(180deg, var(--or-100) 0%, #fff 50%)",
     }}>
-      <img src={tteoniGuide} alt="떠니" style={{ height: 140, objectFit: "contain", marginBottom: 20 }} />
+      <img src={tteoniGuide} alt="나루" style={{ height: 140, objectFit: "contain", marginBottom: 20 }} />
       <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--g900)", marginBottom: 8 }}>별명을 정해줘!</h2>
       <p style={{ fontSize: 14, color: "var(--g500)", marginBottom: 28 }}>코스에 표시될 이름이야</p>
 

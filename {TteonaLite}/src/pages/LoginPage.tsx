@@ -51,7 +51,7 @@ export function LoginPage({ onLoginSuccess }: Props) {
         @keyframes mascotFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
-      <img src={tteoniFont} alt="떠니" style={{
+      <img src={tteoniFont} alt="나루" style={{
         height: 200, objectFit: "contain",
         animation: ready ? "mascotFloat 3s ease-in-out infinite" : "none",
       }} />
