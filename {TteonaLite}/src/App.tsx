@@ -4,12 +4,15 @@ import { LoginPage } from "./pages/LoginPage";
 import { NicknamePage } from "./pages/NicknamePage";
 import { HomePage } from "./pages/HomePage";
 import { RecordingPage } from "./pages/RecordingPage";
+import { ExploreTab } from "./pages/ExploreTab";
+import { CourseDetailPage } from "./pages/CourseDetailPage";
+import { ArchivePage } from "./pages/ArchivePage";
 import { BottomTabBar } from "./components/BottomTabBar";
 import { useTodaySession } from "./hooks/useTodaySession";
 import { clearAuth, api } from "./api/client";
 import type { User, AppTab, LoginResponse, Course } from "./api/types";
 
-type SubPage = "tabs" | "recording" | "course-detail";
+type SubPage = "tabs" | "recording" | "course-detail" | "archive";
 
 function App() {
   const [onboardingSeen, setOnboardingSeen] = useState(
@@ -106,15 +109,27 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
     );
   }
 
-  // 코스 상세 (추후 개발)
-  if (subPage === "course-detail") {
+  // 아카이브
+  if (subPage === "archive") {
     return (
-      <div style={{ padding: 20 }}>
-        <button onClick={() => setSubPage("tabs")} style={{ marginBottom: 12, padding: "8px 16px", border: "1px solid var(--g200)", borderRadius: 8, background: "#fff", cursor: "pointer" }}>
-          ← 뒤로
-        </button>
-        <p style={{ color: "var(--g500)" }}>코스 상세 (개발 중)</p>
-      </div>
+      <ArchivePage
+        onBack={() => setSubPage("tabs")}
+        onCourseDetail={(id) => { setSelectedCourseId(id); setSubPage("course-detail"); }}
+      />
+    );
+  }
+
+  // 코스 상세
+  if (subPage === "course-detail" && selectedCourseId) {
+    return (
+      <CourseDetailPage
+        courseId={selectedCourseId}
+        onBack={() => setSubPage("tabs")}
+        onStartCourseNav={(course) => {
+          // 이 코스로 떠나기 (기록 모드 시작)
+          handleStartRecording();
+        }}
+      />
     );
   }
 
@@ -131,10 +146,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
         />
       )}
       {tab === "explore" && (
-        <div style={{ padding: "20px 20px 100px" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>코스 탐색</h2>
-          <p style={{ color: "var(--g500)", fontSize: 14 }}>탐색탭 개발 예정</p>
-        </div>
+        <ExploreTab onCourseDetail={(id) => { setSelectedCourseId(id); setSubPage("course-detail"); }} />
       )}
       {tab === "settings" && (
         <div style={{ padding: "20px 20px 100px" }}>
@@ -147,6 +159,10 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
             </div>
           </div>
           <div style={{ background: "#fff", borderRadius: 16, border: "1px solid var(--g100)" }}>
+            <div onClick={() => setSubPage("archive")} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, borderBottom: "1px solid var(--g100)", cursor: "pointer" }}>
+              <span style={{ fontSize: 14 }}>코스 아카이브</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, borderBottom: "1px solid var(--g100)", cursor: "pointer" }}>
               <span style={{ fontSize: 14 }}>이용약관</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
