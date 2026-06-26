@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3002";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3004";
 
 export class ApiError extends Error {
   constructor(message: string, public readonly code?: string, public readonly status?: number) {
@@ -7,11 +7,30 @@ export class ApiError extends Error {
   }
 }
 
-let authToken: string | null = localStorage.getItem("tteonalite_token");
+let authToken: string | null = localStorage.getItem("tteona_token");
 
 export function saveAuth(token: string) {
   authToken = token;
-  localStorage.setItem("tteonalite_token", token);
+  localStorage.setItem("tteona_token", token);
+}
+
+export function clearAuth() {
+  authToken = null;
+  localStorage.removeItem("tteona_token");
+  localStorage.removeItem("tteona_user");
+}
+
+export async function uploadPhoto(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("photo", file);
+  const res = await fetch(`${BASE_URL}/api/upload/photo`, {
+    method: "POST",
+    headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    body: form,
+  });
+  if (!res.ok) throw new Error("사진 업로드 실패");
+  const data = await res.json();
+  return data.url;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

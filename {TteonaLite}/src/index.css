@@ -1,0 +1,25 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { overflow-x: hidden; overscroll-behavior: none; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+  background: #fff;
+  color: #191919;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+#root { width: 100%; min-height: 100vh; }
+:root {
+  --or: #FF6B35;
+  --or-d: #E55A28;
+  --or-bg: rgba(255,107,53,.08);
+  --or-100: #FFF0E8;
+  --g50: #F9FAFB;
+  --g100: #F3F4F6;
+  --g200: #E5E7EB;
+  --g300: #D1D5DB;
+  --g400: #9CA3AF;
+  --g500: #6B7280;
+  --g700: #374151;
+  --g900: #111827;
+}
