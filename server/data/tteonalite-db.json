@@ -1,0 +1,21 @@
+{
+  "users": [
+    {
+      "id": "bdca5f68-1dd6-4b41-a6a9-593d959892b8",
+      "anonymousKey": "test-key",
+      "tossUserKey": null,
+      "nickname": "태태",
+      "createdAt": "2026-06-26T15:31:44.738Z"
+    }
+  ],
+  "courses": [],
+  "todaySessions": [
+    {
+      "id": "be7bfdfd-e91c-4089-bc43-bddc44105bad",
+      "userId": "bdca5f68-1dd6-4b41-a6a9-593d959892b8",
+      "places": [],
+      "startedAt": "2026-06-26T15:31:44.807Z",
+      "status": "recording"
+    }
+  ]
+}
