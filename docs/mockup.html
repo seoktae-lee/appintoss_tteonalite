@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>떠나라이트 - 인터랙티브 목업 v2</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Pretendard',system-ui,sans-serif;background:#e8e8e8;display:flex;justify-content:center;align-items:center;min-height:100vh;}
+.phone{width:375px;height:812px;background:#fff;border-radius:44px;box-shadow:0 24px 80px rgba(0,0,0,.18);overflow:hidden;position:relative;border:6px solid #111;}
+.notch{width:126px;height:32px;background:#111;border-radius:0 0 18px 18px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:100;}
+.screen{width:100%;height:100%;overflow:hidden;position:relative;}
+.page{display:none;width:100%;height:100%;flex-direction:column;position:absolute;top:0;left:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.page.active{display:flex;}
+:root{
+  --or:#F5A623;--or-d:#D4891A;--or-dk:#8B5E10;
+  --or-50:#FFF8ED;--or-100:#FFEFD5;--or-200:#FFDBA8;
+  --pk:#FFD4A8;--pk-50:#FFF5EB;
+  --g50:#F9FAFB;--g100:#F3F4F6;--g200:#E5E7EB;--g300:#D1D5DB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;
+  --r:16px;--rs:10px;
+}
+.hd{padding:8px 20px 12px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10;}
+.hd-t{font-size:18px;font-weight:700;color:var(--g900);flex:1;}
+.hd-b{width:36px;height:36px;border:none;background:var(--g100);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.hd-b svg{width:18px;height:18px;stroke:var(--g700);stroke-width:2.5;fill:none;}
+.ct{flex:1;padding:0 20px 100px;}
+.tab{position:absolute;bottom:0;left:0;right:0;height:82px;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border-top:1px solid var(--g200);display:flex;align-items:flex-start;justify-content:space-around;padding-top:8px;z-index:50;}
+.ti{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;padding:4px 12px;}
+.ti svg{width:22px;height:22px;stroke:var(--g400);stroke-width:1.8;fill:none;}
+.ti small{font-size:10px;color:var(--g400);font-weight:500;}
+.ti.on svg{stroke:var(--or);}
+.ti.on small{color:var(--or);font-weight:700;}
+.btn{border:none;border-radius:var(--rs);padding:14px 20px;font-size:15px;font-weight:600;cursor:pointer;width:100%;text-align:center;font-family:inherit;}
+.bm{background:var(--or);color:#fff;}
+.bs{background:var(--or-50);color:var(--or-d);}
+.bg{background:#fff;border:1.5px solid var(--g200);color:var(--g700);}
+.bp{border-radius:100px;}
+.cd{background:#fff;border-radius:var(--r);border:1px solid var(--g100);padding:16px;}
+.cdr{box-shadow:0 2px 12px rgba(0,0,0,.05);border:none;}
+.ch{display:inline-flex;padding:7px 14px;border-radius:100px;font-size:13px;font-weight:500;border:1.5px solid var(--g200);background:#fff;cursor:pointer;color:var(--g500);}
+.ch.on{background:var(--or);border-color:var(--or);color:#fff;font-weight:600;}
+.sec{font-size:12px;font-weight:700;color:var(--g400);margin:20px 0 8px;}
+.bbl{background:var(--or-50);border:1px solid var(--or-200);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--g700);line-height:1.55;position:relative;}
+.bbl::before{content:'';position:absolute;left:-6px;top:14px;width:12px;height:12px;background:var(--or-50);border-left:1px solid var(--or-200);border-bottom:1px solid var(--or-200);transform:rotate(45deg);}
+.mr{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;}
+@keyframes fadeUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.anim{animation:fadeUp .25s ease-out;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.float{animation:float 3s ease-in-out infinite;}
+.lw{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;background:linear-gradient(180deg,var(--or-50) 0%,#fff 65%);}
+.lw h1{font-size:32px;font-weight:800;color:var(--or-dk);margin-top:12px;letter-spacing:-.5px;}
+.ob{height:100%;display:flex;flex-direction:column;}
+.ob-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;}
+.ob-dots{display:flex;gap:8px;justify-content:center;margin-bottom:24px;}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--g300);transition:.2s;}
+.ob-dot.on{width:24px;border-radius:4px;background:var(--or);}
+.ob-footer{padding:0 32px 48px;}
+.place-card{display:flex;gap:12px;padding:14px;background:var(--g50);border-radius:12px;margin-bottom:8px;cursor:pointer;}
+.place-card img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;}
+.course-card{background:#fff;border-radius:16px;border:1px solid var(--g100);overflow:hidden;margin-bottom:12px;cursor:pointer;}
+.course-card img{width:100%;height:140px;object-fit:cover;}
+.course-card-body{padding:12px 14px;}
+.tag{display:inline-flex;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;background:var(--or-50);color:var(--or-d);}
+.group-card{display:flex;align-items:center;gap:12px;padding:14px;background:var(--g50);border-radius:12px;margin-bottom:8px;cursor:pointer;}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--or-100);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.cal-day{padding:8px 0;border-radius:8px;font-size:13px;color:var(--g500);}
+.cal-day.has{background:var(--or-100);color:var(--or-d);font-weight:600;cursor:pointer;}
+.cal-day.today{border:2px solid var(--or);font-weight:700;}
+.cal-header{font-size:11px;color:var(--g400);font-weight:600;padding:4px 0;}
+.map-bg{position:absolute;top:0;left:0;right:0;bottom:82px;overflow:hidden;background:#E8F0E0;}
+.map-roads{position:absolute;inset:0;opacity:.12;}
+.map-road-h{position:absolute;left:0;right:0;height:2px;background:#888;}
+.map-road-v{position:absolute;top:0;bottom:0;width:2px;background:#888;}
+.map-water{position:absolute;background:linear-gradient(90deg,#A8D8EA,#B8E0F0);opacity:.45;border-radius:4px;}
+.map-label{position:absolute;font-size:10px;color:#555;font-weight:500;}
+.map-marker{position:absolute;cursor:pointer;display:flex;flex-direction:column;align-items:center;z-index:5;}
+.marker-dot{width:38px;height:38px;border-radius:50%;background:var(--or);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(245,166,35,.4);color:#fff;font-weight:700;font-size:14px;}
+.marker-label{background:#fff;padding:2px 7px;border-radius:5px;margin-top:3px;font-size:10px;font-weight:600;color:var(--g900);box-shadow:0 1px 4px rgba(0,0,0,.1);white-space:nowrap;}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.1);z-index:20;padding:20px;max-height:70%;}
+.sheet-handle{width:36px;height:4px;background:var(--g300);border-radius:2px;margin:0 auto 16px;}
+.status-bar{position:absolute;top:48px;left:50%;transform:translateX(-50%);z-index:15;display:flex;align-items:center;gap:8px;}
+.status-pill{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;background:rgba(40,40,40,.85);color:#fff;font-size:13px;font-weight:600;backdrop-filter:blur(4px);}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#FF4444;}
+.count-badge{width:40px;height:40px;border-radius:50%;background:var(--or);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;box-shadow:0 3px 10px rgba(245,166,35,.4);}
+.back-btn{position:absolute;top:48px;left:16px;z-index:15;width:40px;height:40px;border-radius:50%;background:rgba(60,60,60,.7);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.back-btn svg{width:20px;height:20px;stroke:#fff;stroke-width:2.5;fill:none;}
+.num-marker{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;position:absolute;z-index:5;}
+.route-line{position:absolute;z-index:3;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--g50);border:1px solid var(--g200);border-radius:100px;font-size:13px;font-weight:500;color:var(--g700);}
+.chip-close{width:16px;height:16px;border-radius:50%;background:var(--g300);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff;}
+.poi-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--g100);cursor:pointer;}
+.poi-icon{width:36px;height:36px;border-radius:50%;background:var(--or-50);display:flex;align-items:center;justify-content:center;}
+.photo-carousel{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;}
+.photo-carousel::-webkit-scrollbar{display:none;}
+.photo-carousel-item{width:100px;height:100px;border-radius:12px;object-fit:cover;flex-shrink:0;position:relative;}
+.photo-num{position:absolute;bottom:6px;left:6px;width:22px;height:22px;border-radius:50%;background:var(--or);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.skip-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--g200);background:#fff;font-size:12px;color:var(--g500);cursor:pointer;font-family:inherit;}
+.drag-handle{width:24px;height:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:grab;}
+.drag-handle span{width:14px;height:2px;background:var(--g300);border-radius:1px;}
+</style>
+</head>
+<body>
+<div class="phone">
+<div class="notch"></div>
+<div class="screen">
+
+<!-- ===== ONBOARDING 1 ===== -->
+<div class="page active" id="pg-ob1">
+  <div class="ob" style="background:linear-gradient(180deg,var(--or-50),#fff);">
+    <div class="ob-body">
+      <div style="width:120px;height:120px;border-radius:30px;background:var(--or-100);display:flex;align-items:center;justify-content:center;margin-bottom:28px;font-size:60px;" class="float">🍊</div>
+      <h2 style="font-size:26px;font-weight:800;color:var(--g900);margin-bottom:10px;">안녕, 나는 떠니!</h2>
+      <p style="font-size:15px;color:var(--g500);line-height:1.6;">오늘 하루를 여행처럼 기록해볼까?</p>
+    </div>
+    <div class="ob-footer">
+      <div class="ob-dots"><div class="ob-dot on"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
+      <button class="btn bm bp" onclick="nav('pg-ob2')">다음</button>
+      <button class="btn bp" style="background:none;border:none;color:var(--g400);margin-top:4px;width:100%;padding:10px;" onclick="nav('pg-login')">건너뛰기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONBOARDING 2 ===== -->
+<div class="page" id="pg-ob2">
+  <div class="ob" style="background:linear-gradient(180deg,#FFF5EB,#fff);">
+    <div class="ob-body">
+      <div style="width:120px;height:120px;border-radius:30px;background:var(--or-100);display:flex;align-items:center;justify-content:center;margin-bottom:28px;">
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#D4891A" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+      <h2 style="font-size:24px;font-weight:800;color:var(--g900);margin-bottom:10px;">장소마다 사진을 찍어!</h2>
+      <p style="font-size:15px;color:var(--g500);line-height:1.6;">사진+위치+메모로<br>하루 코스가 자동으로 만들어져</p>
+    </div>
+    <div class="ob-footer">
+      <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
+      <button class="btn bm bp" onclick="nav('pg-ob3')">다음</button>
+      <button class="btn bp" style="background:none;border:none;color:var(--g400);margin-top:4px;width:100%;padding:10px;" onclick="nav('pg-login')">건너뛰기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONBOARDING 3 ===== -->
+<div class="page" id="pg-ob3">
+  <div class="ob" style="background:linear-gradient(180deg,#FFEFD5,#fff);">
+    <div class="ob-body">
+      <div style="width:120px;height:120px;border-radius:30px;background:var(--or-100);display:flex;align-items:center;justify-content:center;margin-bottom:28px;">
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#D4891A" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <h2 style="font-size:24px;font-weight:800;color:var(--g900);margin-bottom:10px;">다른 사람의 코스도<br>둘러볼 수 있어!</h2>
+      <p style="font-size:15px;color:var(--g500);line-height:1.6;">인기 데이트/여행 코스를 발견하고<br>좋아요와 북마크로 저장해봐</p>
+    </div>
+    <div class="ob-footer">
+      <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div></div>
+      <button class="btn bm bp" onclick="nav('pg-ob4')">다음</button>
+      <button class="btn bp" style="background:none;border:none;color:var(--g400);margin-top:4px;width:100%;padding:10px;" onclick="nav('pg-login')">건너뛰기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONBOARDING 4 ===== -->
+<div class="page" id="pg-ob4">
+  <div class="ob" style="background:linear-gradient(180deg,var(--pk-50),#fff);">
+    <div class="ob-body">
+      <div style="width:120px;height:120px;border-radius:30px;background:var(--or-100);display:flex;align-items:center;justify-content:center;margin-bottom:28px;">
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#D4891A" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <h2 style="font-size:24px;font-weight:800;color:var(--g900);margin-bottom:10px;">친구와 함께<br>코스를 공유해봐!</h2>
+      <p style="font-size:15px;color:var(--g500);line-height:1.6;">그룹을 만들고 서로의 코스를 보고<br>댓글로 소통할 수 있어</p>
+    </div>
+    <div class="ob-footer">
+      <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot on"></div></div>
+      <button class="btn bm bp" onclick="nav('pg-login')" style="font-size:16px;padding:16px;">시작하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN ===== -->
+<div class="page" id="pg-login">
+  <div class="lw">
+    <div style="font-size:64px;" class="float">🍊</div>
+    <h1>떠나라이트</h1>
+    <p style="font-size:15px;color:var(--g500);line-height:1.6;margin:8px 0 40px;">오늘 하루를 여행처럼 기록하고<br>친구와 공유해봐!</p>
+    <div style="width:100%;">
+      <button class="btn bm bp" onclick="nav('pg-home')" style="font-size:16px;padding:16px;box-shadow:0 4px 16px rgba(245,166,35,.3);">토스로 시작하기</button>
+      <p style="font-size:11px;color:var(--g400);margin-top:12px;">시작하면 이용약관에 동의합니다</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOME (지도 전체화면) ===== -->
+<div class="page" id="pg-home" style="overflow:hidden;">
+  <div class="map-bg" id="home-map">
+    <!-- Roads -->
+    <div class="map-roads">
+      <div class="map-road-h" style="top:25%"></div>
+      <div class="map-road-h" style="top:45%"></div>
+      <div class="map-road-h" style="top:60%"></div>
+      <div class="map-road-h" style="top:75%"></div>
+      <div class="map-road-v" style="left:20%"></div>
+      <div class="map-road-v" style="left:40%"></div>
+      <div class="map-road-v" style="left:60%"></div>
+      <div class="map-road-v" style="left:80%"></div>
+    </div>
+    <!-- Water -->
+    <div class="map-water" style="top:42%;left:5%;right:10%;height:18px;"></div>
+    <!-- Labels -->
+    <div class="map-label" style="top:22%;left:18%;font-size:11px;font-weight:600;">서울</div>
+    <div class="map-label" style="top:30%;left:60%;">춘천</div>
+    <div class="map-label" style="top:50%;left:48%;">수원</div>
+    <div class="map-label" style="top:65%;left:55%;">대전</div>
+    <div class="map-label" style="top:82%;left:60%;">부산</div>
+    <div class="map-label" style="top:78%;left:18%;">광주</div>
+    <!-- Course markers -->
+    <div class="map-marker" style="top:24%;left:28%;" onclick="showSheet('home-preview')">
+      <div class="marker-dot" style="font-size:16px;">🍊</div>
+      <div class="marker-label">성수동 데이트</div>
+    </div>
+    <div class="map-marker" style="top:35%;left:22%;" onclick="showSheet('home-preview')">
+      <div class="marker-dot" style="font-size:16px;">🍊</div>
+      <div class="marker-label">판교 수다 코스</div>
+    </div>
+    <div class="map-marker" style="top:28%;left:50%;" onclick="showSheet('home-preview')">
+      <div class="marker-dot" style="font-size:16px;">🍊</div>
+    </div>
+    <div class="map-marker" style="top:20%;left:40%;" onclick="showSheet('home-preview')">
+      <div class="marker-dot" style="font-size:16px;">🍊</div>
+    </div>
+  </div>
+  <!-- Floating search bar -->
+  <div style="position:absolute;top:48px;left:16px;right:16px;z-index:10;">
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:14px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--g400)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span style="font-size:14px;color:var(--g400);flex:1;">코스명, 지역 검색</span>
+      <div style="display:flex;gap:6px;">
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--or);display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </div>
+        <div style="width:32px;height:32px;border-radius:8px;background:#fff;border:1px solid var(--g200);display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>
+        </div>
+        <div style="width:32px;height:32px;border-radius:8px;background:#fff;border:1px solid var(--g200);display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g500)" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Bottom floating buttons -->
+  <div style="position:absolute;bottom:96px;left:16px;right:16px;z-index:10;display:flex;align-items:center;justify-content:center;gap:12px;">
+    <button onclick="nav('pg-share-select')" style="display:flex;align-items:center;gap:8px;padding:14px 32px;border-radius:100px;border:none;background:var(--or);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(245,166,35,.4);flex-shrink:0;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      나의 오늘
+    </button>
+    <button style="width:48px;height:48px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.1);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+    </button>
+  </div>
+  <!-- Course preview bottom sheet (hidden by default) -->
+  <div class="sheet" id="home-preview" style="display:none;">
+    <div class="sheet-handle"></div>
+    <button onclick="hideSheet('home-preview')" style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:var(--g100);border:none;cursor:pointer;font-size:14px;color:var(--g500);">✕</button>
+    <div class="photo-carousel" style="margin-bottom:12px;">
+      <div style="position:relative;"><img class="photo-carousel-item" src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&h=200&fit=crop"><div class="photo-num">1</div></div>
+      <div style="position:relative;"><img class="photo-carousel-item" src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&h=200&fit=crop"><div class="photo-num">2</div></div>
+      <div style="position:relative;"><img class="photo-carousel-item" src="https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=200&h=200&fit=crop"><div class="photo-num">3</div></div>
+      <div style="position:relative;"><img class="photo-carousel-item" src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200&h=200&fit=crop"><div class="photo-num">4</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;" onclick="nav('pg-course-detail');hideSheet('home-preview');" style="cursor:pointer;">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <h3 style="font-size:17px;font-weight:700;">성수동 데이트</h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" fill="none"/></svg>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+          <span class="tag">데이트</span>
+          <span style="font-size:12px;color:var(--g500);">태태</span>
+          <span style="font-size:12px;color:var(--g400);">장소 4개</span>
+          <span style="font-size:12px;color:var(--g400);">❤ 24</span>
+        </div>
+      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+  <div class="tab">
+    <button class="ti on"><svg viewBox="0 0 24 24"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4z"/></svg><small>홈</small></button>
+    <button class="ti" onclick="nav('pg-explore')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><small>피드</small></button>
+    <button class="ti" onclick="nav('pg-settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><small>설정</small></button>
+  </div>
+</div>
+
+<!-- ===== 그룹 공유 선택 ===== -->
+<div class="page" id="pg-share-select" style="background:rgba(0,0,0,.4);justify-content:flex-end;">
+  <div style="background:#fff;border-radius:20px 20px 0 0;padding:28px 20px 40px;">
+    <div class="sheet-handle"></div>
+    <h2 style="font-size:20px;font-weight:700;text-align:center;margin-bottom:4px;">어디에 공유할까요?</h2>
+    <p style="font-size:14px;color:var(--g400);text-align:center;margin-bottom:24px;">선택한 그룹에 오늘의 기록이 공유돼요</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+      <label style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--g50);border-radius:14px;cursor:pointer;">
+        <input type="radio" name="share-group" style="width:20px;height:20px;accent-color:var(--or);">
+        <div><p style="font-size:15px;font-weight:600;margin:0;">우리 데이트</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">멤버 2명</p></div>
+      </label>
+      <label style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--g50);border-radius:14px;cursor:pointer;">
+        <input type="radio" name="share-group" style="width:20px;height:20px;accent-color:var(--or);">
+        <div><p style="font-size:15px;font-weight:600;margin:0;">여행 친구들</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">멤버 4명</p></div>
+      </label>
+    </div>
+    <button class="btn bm bp" onclick="nav('pg-recording')" style="font-size:16px;padding:16px;">공유 없이 시작</button>
+    <button class="btn bp" style="background:none;border:none;color:var(--g400);margin-top:8px;width:100%;padding:10px;" onclick="nav('pg-home')">취소</button>
+  </div>
+</div>
+
+<!-- ===== 기록 모드 (0곳) ===== -->
+<div class="page" id="pg-recording" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:0;">
+    <div class="map-roads">
+      <div class="map-road-h" style="top:20%"></div><div class="map-road-h" style="top:35%"></div>
+      <div class="map-road-h" style="top:50%"></div><div class="map-road-h" style="top:65%"></div>
+      <div class="map-road-h" style="top:80%"></div>
+      <div class="map-road-v" style="left:15%"></div><div class="map-road-v" style="left:30%"></div>
+      <div class="map-road-v" style="left:50%"></div><div class="map-road-v" style="left:70%"></div>
+      <div class="map-road-v" style="left:85%"></div>
+    </div>
+    <div class="map-water" style="top:48%;left:0;right:20%;height:12px;"></div>
+    <div class="map-label" style="top:30%;left:15%;">GS25</div>
+    <div class="map-label" style="top:55%;left:60%;">이마트</div>
+    <div class="map-label" style="top:70%;left:35%;">성복역</div>
+    <!-- Current location dot -->
+    <div style="position:absolute;top:50%;left:48%;width:16px;height:16px;border-radius:50%;background:var(--or);box-shadow:0 0 0 6px rgba(245,166,35,.2);z-index:5;"></div>
+  </div>
+  <button class="back-btn" onclick="nav('pg-home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="status-bar">
+    <div class="status-pill"><div class="status-dot"></div>나의 오늘 기록 중</div>
+  </div>
+  <div class="count-badge" style="position:absolute;top:48px;right:16px;z-index:15;">0곳</div>
+  <!-- Bottom CTA -->
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;padding:16px 20px 36px;z-index:10;">
+    <button class="btn bm bp" onclick="nav('pg-place-select')" style="font-size:16px;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      여기서 촬영
+    </button>
+  </div>
+</div>
+
+<!-- ===== 장소 선택 (어디서 찍으셨나요?) ===== -->
+<div class="page" id="pg-place-select" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:50%;">
+    <div class="map-roads">
+      <div class="map-road-h" style="top:30%"></div><div class="map-road-h" style="top:60%"></div>
+      <div class="map-road-v" style="left:30%"></div><div class="map-road-v" style="left:60%"></div>
+    </div>
+    <div style="position:absolute;top:50%;left:48%;width:16px;height:16px;border-radius:50%;background:var(--or);box-shadow:0 0 0 6px rgba(245,166,35,.2);z-index:5;"></div>
+  </div>
+  <button class="back-btn" onclick="nav('pg-recording')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="status-bar">
+    <div class="status-pill"><div class="status-dot"></div>나의 오늘 기록 중</div>
+  </div>
+  <div class="count-badge" style="position:absolute;top:48px;right:16px;z-index:15;">0곳</div>
+  <!-- Place selection sheet -->
+  <div style="position:absolute;bottom:0;left:0;right:0;top:45%;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.1);z-index:20;padding:20px;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size:18px;font-weight:700;text-align:center;margin-bottom:20px;">어디서 찍으셨나요?</h3>
+    <div class="poi-item" onclick="nav('pg-camera')" style="border-bottom:none;padding-top:0;color:var(--or);font-weight:600;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span style="font-size:15px;">직접 입력하기</span>
+    </div>
+    <div class="poi-item" onclick="nav('pg-camera')">
+      <div class="poi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div style="flex:1;"><p style="font-size:14px;font-weight:600;margin:0;">푸른마을푸르지오아파트</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">현재 위치</p></div>
+      <span style="font-size:12px;color:var(--g400);">0m</span>
+    </div>
+    <div class="poi-item" onclick="nav('pg-camera')">
+      <div class="poi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div style="flex:1;"><p style="font-size:14px;font-weight:600;margin:0;">CU 수지푸른마을점</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">CU</p></div>
+      <span style="font-size:12px;color:var(--g400);">117m</span>
+    </div>
+    <div class="poi-item" onclick="nav('pg-camera')">
+      <div class="poi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div style="flex:1;"><p style="font-size:14px;font-weight:600;margin:0;">마시왕잔치국수</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">국수</p></div>
+      <span style="font-size:12px;color:var(--g400);">151m</span>
+    </div>
+    <div class="poi-item" onclick="nav('pg-camera')">
+      <div class="poi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div style="flex:1;"><p style="font-size:14px;font-weight:600;margin:0;">170도시까스</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">돈까스,우동</p></div>
+      <span style="font-size:12px;color:var(--g400);">152m</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 카메라 (사진 촬영) ===== -->
+<div class="page" id="pg-camera" style="overflow:hidden;">
+  <div style="position:absolute;inset:0;background:#1a1a1a;">
+    <!-- Camera preview (dark area) -->
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;">
+      <div style="width:200px;height:160px;border:2px dashed rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <p style="color:rgba(255,255,255,.4);font-size:13px;text-align:center;">카메라 미리보기</p>
+      </div>
+    </div>
+    <!-- Top bar -->
+    <button onclick="nav('pg-place-select')" style="position:absolute;top:50px;left:16px;z-index:10;width:40px;height:40px;border-radius:50%;background:rgba(60,60,60,.7);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div style="position:absolute;top:54px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(60,60,60,.7);padding:6px 14px;border-radius:100px;color:#fff;font-size:13px;font-weight:500;">
+      푸른마을푸르지오아파트
+    </div>
+    <!-- Shutter button -->
+    <div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);z-index:10;">
+      <button onclick="nav('pg-recording-1')" style="width:72px;height:72px;border-radius:50%;background:#fff;border:4px solid var(--g300);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <div style="width:56px;height:56px;border-radius:50%;background:#fff;border:2px solid var(--g200);"></div>
+      </button>
+    </div>
+    <!-- Gallery button -->
+    <div style="position:absolute;bottom:88px;left:32px;z-index:10;width:48px;height:48px;border-radius:12px;background:var(--g500);display:flex;align-items:center;justify-content:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 기록 완료 (1곳 추가됨) ===== -->
+<div class="page" id="pg-recording-1" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:0;">
+    <div class="map-roads">
+      <div class="map-road-h" style="top:20%"></div><div class="map-road-h" style="top:35%"></div>
+      <div class="map-road-h" style="top:50%"></div><div class="map-road-h" style="top:65%"></div>
+      <div class="map-road-h" style="top:80%"></div>
+      <div class="map-road-v" style="left:15%"></div><div class="map-road-v" style="left:30%"></div>
+      <div class="map-road-v" style="left:50%"></div><div class="map-road-v" style="left:70%"></div>
+      <div class="map-road-v" style="left:85%"></div>
+    </div>
+    <div class="map-water" style="top:48%;left:0;right:20%;height:12px;"></div>
+    <div class="map-label" style="top:30%;left:15%;">GS25</div>
+    <div class="map-label" style="top:55%;left:60%;">이마트</div>
+    <div class="map-label" style="top:70%;left:35%;">성복역</div>
+    <!-- Recorded place marker -->
+    <div class="num-marker" style="top:46%;left:44%;background:var(--or);box-shadow:0 3px 10px rgba(245,166,35,.4);">1</div>
+    <div style="position:absolute;top:52%;left:38%;font-size:10px;font-weight:600;color:var(--g900);background:#fff;padding:2px 6px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.1);z-index:5;">푸른마을푸르지오</div>
+  </div>
+  <button class="back-btn" onclick="nav('pg-home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="status-bar">
+    <div class="status-pill"><div class="status-dot"></div>나의 오늘 기록 중</div>
+  </div>
+  <div class="count-badge" style="position:absolute;top:48px;right:16px;z-index:15;">1곳</div>
+  <!-- Bottom area -->
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;padding:12px 20px 36px;z-index:10;">
+    <div style="margin-bottom:12px;">
+      <div class="chip">
+        <div style="width:20px;height:20px;border-radius:50%;background:var(--or);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">1</div>
+        푸른마을푸르지오아파트
+        <div class="chip-close">✕</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn bm bp" onclick="nav('pg-place-select')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;padding:14px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        여기서 촬영
+      </button>
+      <button class="btn bg bp" onclick="nav('pg-finish')" style="flex:1;font-size:15px;padding:14px;color:var(--or-d);border-color:var(--or-200);">오늘 종료</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 오늘 종료 시트 ===== -->
+<div class="page" id="pg-finish" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:0;filter:brightness(.7);">
+    <div class="map-roads"><div class="map-road-h" style="top:35%"></div><div class="map-road-h" style="top:65%"></div><div class="map-road-v" style="left:35%"></div><div class="map-road-v" style="left:65%"></div></div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;top:40%;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.15);z-index:20;padding:28px 20px 40px;display:flex;flex-direction:column;align-items:center;">
+    <div class="sheet-handle"></div>
+    <div style="width:64px;height:64px;border-radius:50%;background:var(--or-50);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    </div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">오늘을 마칠까요?</h2>
+    <p style="font-size:14px;color:var(--g400);margin-bottom:24px;">방문한 장소 1곳이 기록됐어요</p>
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+      <button class="btn bm bp" onclick="nav('pg-home-resume')" style="font-size:16px;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        코스로 저장하기
+      </button>
+      <button class="btn bg bp" onclick="nav('pg-recording-1')" style="font-size:15px;padding:14px;color:var(--or-d);">계속 기록할게요</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 홈 (이어하기 상태) ===== -->
+<div class="page" id="pg-home-resume" style="overflow:hidden;">
+  <div class="map-bg" id="home-map2">
+    <div class="map-roads">
+      <div class="map-road-h" style="top:25%"></div><div class="map-road-h" style="top:45%"></div>
+      <div class="map-road-h" style="top:60%"></div><div class="map-road-h" style="top:75%"></div>
+      <div class="map-road-v" style="left:20%"></div><div class="map-road-v" style="left:40%"></div>
+      <div class="map-road-v" style="left:60%"></div><div class="map-road-v" style="left:80%"></div>
+    </div>
+    <div class="map-water" style="top:42%;left:5%;right:10%;height:18px;"></div>
+    <div class="map-label" style="top:22%;left:18%;font-size:11px;font-weight:600;">서울</div>
+    <div class="map-label" style="top:50%;left:48%;">수원</div>
+    <div class="map-marker" style="top:24%;left:28%;" onclick="nav('pg-course-detail')">
+      <div class="marker-dot" style="font-size:16px;">🍊</div>
+      <div class="marker-label">성수동 데이트</div>
+    </div>
+    <div class="map-marker" style="top:35%;left:22%;">
+      <div class="marker-dot" style="font-size:16px;">🍊</div>
+      <div class="marker-label">판교 수다 코스</div>
+    </div>
+  </div>
+  <!-- Search bar -->
+  <div style="position:absolute;top:48px;left:16px;right:16px;z-index:10;">
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:14px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--g400)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span style="font-size:14px;color:var(--g400);flex:1;">코스명, 지역 검색</span>
+    </div>
+  </div>
+  <!-- Bottom buttons with 이어하기 -->
+  <div style="position:absolute;bottom:96px;left:16px;right:16px;z-index:10;display:flex;align-items:center;justify-content:center;gap:12px;">
+    <button onclick="nav('pg-resume-sheet')" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:none;border-radius:16px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.1);cursor:pointer;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span style="font-size:10px;color:var(--or);font-weight:600;">이어하기</span>
+    </button>
+    <button onclick="nav('pg-share-select')" style="display:flex;align-items:center;gap:8px;padding:14px 28px;border-radius:100px;border:none;background:var(--or);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(245,166,35,.4);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      나의 오늘
+    </button>
+    <button style="width:48px;height:48px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.1);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+    </button>
+  </div>
+  <div class="tab">
+    <button class="ti on"><svg viewBox="0 0 24 24"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4z"/></svg><small>홈</small></button>
+    <button class="ti" onclick="nav('pg-explore')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><small>피드</small></button>
+    <button class="ti" onclick="nav('pg-settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg><small>설정</small></button>
+  </div>
+</div>
+
+<!-- ===== 이어하기 시트 ===== -->
+<div class="page" id="pg-resume-sheet" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:0;filter:brightness(.8);">
+    <div class="map-roads"><div class="map-road-h" style="top:35%"></div><div class="map-road-h" style="top:65%"></div><div class="map-road-v" style="left:35%"></div><div class="map-road-v" style="left:65%"></div></div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.15);z-index:20;padding:28px 20px 40px;display:flex;flex-direction:column;align-items:center;">
+    <div class="sheet-handle"></div>
+    <div style="width:64px;height:64px;border-radius:50%;background:var(--or-50);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+    </div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">오늘 기록이 남아있어요</h2>
+    <p style="font-size:14px;color:var(--g400);margin-bottom:24px;">장소 1곳 · 오후 5:05</p>
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+      <button class="btn bm bp" onclick="nav('pg-recording-1')" style="font-size:16px;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        이어서 기록하기
+      </button>
+      <button class="btn bg bp" onclick="nav('pg-recording')" style="font-size:15px;padding:14px;">
+        <span style="display:flex;align-items:center;justify-content:center;gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g500)" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          새로 시작하기
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 코스 상세 (이 코스로 떠나기) ===== -->
+<div class="page" id="pg-course-detail">
+  <!-- Top bar -->
+  <div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);">
+    <button class="hd-b" onclick="nav('pg-home')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <span style="font-size:17px;font-weight:700;">성수동 데이트</span>
+    <div style="display:flex;gap:8px;">
+      <button class="hd-b" style="background:none;"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
+      <button class="hd-b" style="background:none;"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg></button>
+      <button class="hd-b" style="background:none;"><svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:90px;">
+    <!-- Map with route -->
+    <div style="height:220px;background:#E8F0E0;position:relative;overflow:hidden;">
+      <div class="map-roads" style="opacity:.08;">
+        <div class="map-road-h" style="top:30%"></div><div class="map-road-h" style="top:60%"></div>
+        <div class="map-road-v" style="left:30%"></div><div class="map-road-v" style="left:60%"></div>
+      </div>
+      <!-- Route dashed line -->
+      <svg style="position:absolute;inset:0;z-index:3;" width="100%" height="100%">
+        <line x1="25%" y1="75%" x2="35%" y2="55%" stroke="var(--or)" stroke-width="3" stroke-dasharray="8,6" opacity=".6"/>
+        <line x1="35%" y1="55%" x2="55%" y2="40%" stroke="var(--or)" stroke-width="3" stroke-dasharray="8,6" opacity=".6"/>
+        <line x1="55%" y1="40%" x2="70%" y2="25%" stroke="var(--or)" stroke-width="3" stroke-dasharray="8,6" opacity=".6"/>
+      </svg>
+      <div class="num-marker" style="top:68%;left:22%;background:var(--or);">1</div>
+      <div class="num-marker" style="top:48%;left:32%;background:var(--or);">2</div>
+      <div class="num-marker" style="top:33%;left:52%;background:var(--or);">3</div>
+      <div class="num-marker" style="top:18%;left:67%;background:var(--or);">4</div>
+    </div>
+    <!-- Creator badge -->
+    <div style="padding:8px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" fill="none"/></svg>
+        <span style="font-size:12px;color:var(--or);font-weight:600;">크리에이터 코스</span>
+      </div>
+      <span style="font-size:13px;color:var(--g500);">태태</span>
+    </div>
+    <!-- Photo swipe -->
+    <div style="padding:0 20px;">
+      <div style="border-radius:16px;overflow:hidden;margin-bottom:8px;">
+        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=260&fit=crop" style="width:100%;height:200px;object-fit:cover;display:block;">
+      </div>
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--or);"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--g300);"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--g300);"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--g300);"></div>
+      </div>
+      <!-- Tags & likes -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="tag">데이트</span>
+          <span style="font-size:13px;color:var(--g400);">37.5°N</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;color:var(--g400);font-size:13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--g300)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>
+          24
+        </div>
+      </div>
+      <!-- Place list -->
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">장소 목록</h4>
+      <div class="place-card">
+        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=120&h=120&fit=crop">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <div style="width:18px;height:18px;border-radius:50%;background:var(--or);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">1</div>
+            <p style="font-size:14px;font-weight:600;margin:0;">어니언 성수</p>
+          </div>
+          <p style="font-size:12px;color:var(--g400);margin:0;">서울 성동구 성수동2가</p>
+        </div>
+      </div>
+      <div class="place-card">
+        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=120&h=120&fit=crop">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <div style="width:18px;height:18px;border-radius:50%;background:var(--or);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">2</div>
+            <p style="font-size:14px;font-weight:600;margin:0;">뚝섬 파스타</p>
+          </div>
+          <p style="font-size:12px;color:var(--g400);margin:0;">서울 성동구 뚝섬로</p>
+        </div>
+      </div>
+      <div class="place-card">
+        <img src="https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=120&h=120&fit=crop">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <div style="width:18px;height:18px;border-radius:50%;background:var(--or);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">3</div>
+            <p style="font-size:14px;font-weight:600;margin:0;">서울숲</p>
+          </div>
+          <p style="font-size:12px;color:var(--g400);margin:0;">서울 성동구 뚝섬로 273</p>
+        </div>
+      </div>
+      <div class="place-card">
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=120&h=120&fit=crop">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <div style="width:18px;height:18px;border-radius:50%;background:var(--or);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">4</div>
+            <p style="font-size:14px;font-weight:600;margin:0;">대림창고</p>
+          </div>
+          <p style="font-size:12px;color:var(--g400);margin:0;">서울 성동구 성수이로</p>
+        </div>
+      </div>
+      <!-- 본앱 유도 -->
+      <div style="margin-top:16px;padding:16px;background:linear-gradient(135deg,var(--or-50),var(--pk-50));border-radius:14px;text-align:center;">
+        <p style="font-size:14px;font-weight:600;color:var(--or-dk);margin:0 0 4px;">영상으로 더 멋지게 기록하고 싶다면?</p>
+        <p style="font-size:12px;color:var(--g500);margin:0 0 10px;">떠나 앱에서 자동 Vlog를 만들어봐!</p>
+        <button class="btn bs bp" style="font-size:13px;padding:10px 20px;width:auto;">떠나 앱 다운로드</button>
+      </div>
+    </div>
+  </div>
+  <!-- Fixed bottom CTA -->
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--g100);padding:12px 20px 32px;z-index:10;">
+    <button class="btn bm bp" onclick="nav('pg-course-share')" style="font-size:16px;padding:16px;">이 코스로 떠나기</button>
+  </div>
+</div>
+
+<!-- ===== 코스 떠나기 > 그룹 선택 ===== -->
+<div class="page" id="pg-course-share" style="background:rgba(0,0,0,.4);justify-content:flex-end;">
+  <div style="background:#fff;border-radius:20px 20px 0 0;padding:28px 20px 40px;">
+    <div class="sheet-handle"></div>
+    <h2 style="font-size:20px;font-weight:700;text-align:center;margin-bottom:4px;">어디에 공유할까요?</h2>
+    <p style="font-size:14px;color:var(--g400);text-align:center;margin-bottom:24px;">선택한 그룹에 오늘의 기록이 공유돼요</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+      <label style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--g50);border-radius:14px;cursor:pointer;">
+        <input type="radio" name="course-share" style="width:20px;height:20px;accent-color:var(--or);">
+        <div><p style="font-size:15px;font-weight:600;margin:0;">우리 데이트</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">멤버 2명</p></div>
+      </label>
+      <label style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--g50);border-radius:14px;cursor:pointer;">
+        <input type="radio" name="course-share" style="width:20px;height:20px;accent-color:var(--or);">
+        <div><p style="font-size:15px;font-weight:600;margin:0;">여행 친구들</p><p style="font-size:12px;color:var(--g400);margin:2px 0 0;">멤버 4명</p></div>
+      </label>
+    </div>
+    <button class="btn bm bp" onclick="nav('pg-course-nav')" style="font-size:16px;padding:16px;">공유 없이 시작</button>
+    <button class="btn bp" style="background:none;border:none;color:var(--g400);margin-top:8px;width:100%;padding:10px;" onclick="nav('pg-course-detail')">취소</button>
+  </div>
+</div>
+
+<!-- ===== 코스 진행 중 (네비게이션) ===== -->
+<div class="page" id="pg-course-nav" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:0;">
+    <div class="map-roads">
+      <div class="map-road-h" style="top:20%"></div><div class="map-road-h" style="top:35%"></div>
+      <div class="map-road-h" style="top:50%"></div><div class="map-road-h" style="top:65%"></div>
+      <div class="map-road-h" style="top:80%"></div>
+      <div class="map-road-v" style="left:15%"></div><div class="map-road-v" style="left:35%"></div>
+      <div class="map-road-v" style="left:55%"></div><div class="map-road-v" style="left:75%"></div>
+    </div>
+    <div class="map-label" style="top:25%;left:25%;">GS25</div>
+    <div class="map-label" style="top:60%;left:60%;">다이소</div>
+    <!-- Route with numbered markers -->
+    <svg style="position:absolute;inset:0;z-index:3;" width="100%" height="100%">
+      <line x1="20%" y1="80%" x2="25%" y2="65%" stroke="var(--or)" stroke-width="3" stroke-dasharray="8,6" opacity=".5"/>
+      <line x1="25%" y1="65%" x2="40%" y2="50%" stroke="var(--or)" stroke-width="3" stroke-dasharray="8,6" opacity=".5"/>
+      <line x1="40%" y1="50%" x2="55%" y2="38%" stroke="var(--or)" stroke-width="3" stroke-dasharray="8,6" opacity=".5"/>
+      <line x1="55%" y1="38%" x2="65%" y2="22%" stroke="var(--or)" stroke-width="3" stroke-dasharray="8,6" opacity=".5"/>
+    </svg>
+    <div class="num-marker" style="top:74%;left:17%;background:var(--or);">1</div>
+    <div class="num-marker" style="top:59%;left:22%;background:var(--g400);">2</div>
+    <div class="num-marker" style="top:44%;left:37%;background:var(--g400);">3</div>
+    <div class="num-marker" style="top:32%;left:52%;background:var(--g400);">4</div>
+  </div>
+  <button class="back-btn" onclick="nav('pg-home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="status-bar">
+    <div class="status-pill"><div class="status-dot"></div>코스 진행 중</div>
+  </div>
+  <div onclick="nav('pg-course-edit')" style="position:absolute;top:48px;right:16px;z-index:15;display:flex;flex-direction:column;align-items:center;cursor:pointer;">
+    <div class="count-badge">0/4</div>
+    <span style="font-size:10px;color:var(--or);font-weight:600;margin-top:2px;">편집</span>
+  </div>
+  <!-- Bottom navigation info -->
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;padding:12px 20px 36px;z-index:10;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      <span style="font-size:14px;font-weight:600;">어니언 성수까지 2.3km</span>
+    </div>
+    <div style="padding:10px 14px;background:var(--g50);border-radius:10px;display:flex;align-items:center;gap:8px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span style="font-size:13px;color:var(--g500);">어니언 성수로 이동 중...</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 코스 편집 ===== -->
+<div class="page" id="pg-course-edit" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:50%;filter:brightness(.85);">
+    <div class="map-roads"><div class="map-road-h" style="top:40%"></div><div class="map-road-v" style="left:50%"></div></div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;top:35%;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.1);z-index:20;padding:20px;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="font-size:18px;font-weight:700;">코스 편집</h3>
+      <button onclick="nav('pg-course-nav')" style="font-size:15px;font-weight:600;color:var(--or);background:none;border:none;cursor:pointer;">완료</button>
+    </div>
+    <!-- Sortable place list -->
+    <div style="display:flex;flex-direction:column;gap:0;">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--g100);">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--or);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">1</div>
+        <div style="flex:1;">
+          <p style="font-size:14px;font-weight:600;margin:0;">어니언 성수</p>
+          <p style="font-size:11px;color:var(--or);font-weight:500;margin:2px 0 0;">현재 목적지</p>
+        </div>
+        <button class="skip-btn">건너뛰기</button>
+        <div class="drag-handle"><span></span><span></span><span></span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--g100);">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--or);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">2</div>
+        <div style="flex:1;"><p style="font-size:14px;font-weight:600;margin:0;">뚝섬 파스타</p></div>
+        <button class="skip-btn">건너뛰기</button>
+        <div class="drag-handle"><span></span><span></span><span></span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--g100);">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--or);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">3</div>
+        <div style="flex:1;"><p style="font-size:14px;font-weight:600;margin:0;">서울숲</p></div>
+        <button class="skip-btn">건너뛰기</button>
+        <div class="drag-handle"><span></span><span></span><span></span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--or);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">4</div>
+        <div style="flex:1;"><p style="font-size:14px;font-weight:600;margin:0;">대림창고</p></div>
+        <button class="skip-btn">건너뛰기</button>
+        <div class="drag-handle"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 코스 진행 복구 시트 ===== -->
+<div class="page" id="pg-course-resume" style="overflow:hidden;">
+  <div class="map-bg" style="bottom:0;filter:brightness(.8);">
+    <div class="map-roads"><div class="map-road-h" style="top:35%"></div><div class="map-road-h" style="top:65%"></div><div class="map-road-v" style="left:35%"></div><div class="map-road-v" style="left:65%"></div></div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.15);z-index:20;padding:28px 20px 40px;display:flex;flex-direction:column;align-items:center;">
+    <div class="sheet-handle"></div>
+    <div style="width:64px;height:64px;border-radius:50%;background:var(--or-50);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+    </div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">진행 중인 코스가 있어요</h2>
+    <p style="font-size:14px;color:var(--g400);margin-bottom:24px;">성수동 데이트 · 0/4곳 완료</p>
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+      <button class="btn bm bp" onclick="nav('pg-course-nav')" style="font-size:16px;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        이어서 기록하기
+      </button>
+      <button class="btn bg bp" onclick="nav('pg-home')" style="font-size:15px;padding:14px;">새로 시작하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPLORE (피드) ===== -->
+<div class="page" id="pg-explore">
+  <div class="hd"><div class="hd-t">코스 탐색</div></div>
+  <div class="ct">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <span class="ch on">전체</span><span class="ch">데이트</span><span class="ch">여행</span><span class="ch">맛집</span><span class="ch">카페</span><span class="ch">산책</span>
+    </div>
+    <div class="course-card" onclick="nav('pg-course-detail')">
+      <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400&h=200&fit=crop">
+      <div class="course-card-body">
+        <span class="tag">데이트</span>
+        <h3 style="font-size:15px;font-weight:600;margin:6px 0 4px;">성수동 감성 데이트 코스</h3>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--g400);">
+          <span>태태</span><span>장소 4곳</span><span>❤ 24</span>
+        </div>
+      </div>
+    </div>
+    <div class="course-card" onclick="nav('pg-course-detail')">
+      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop">
+      <div class="course-card-body">
+        <span class="tag">여행</span>
+        <h3 style="font-size:15px;font-weight:600;margin:6px 0 4px;">제주도 동쪽 해안 드라이브</h3>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--g400);">
+          <span>민지</span><span>장소 6곳</span><span>❤ 89</span>
+        </div>
+      </div>
+    </div>
+    <div class="course-card" onclick="nav('pg-course-detail')">
+      <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=200&fit=crop">
+      <div class="course-card-body">
+        <span class="tag">카페투어</span>
+        <h3 style="font-size:15px;font-weight:600;margin:6px 0 4px;">망원동 카페 투어 4곳</h3>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--g400);">
+          <span>수아</span><span>장소 4곳</span><span>❤ 56</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tab">
+    <button class="ti" onclick="nav('pg-home')"><svg viewBox="0 0 24 24"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4z"/></svg><small>홈</small></button>
+    <button class="ti on"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><small>피드</small></button>
+    <button class="ti" onclick="nav('pg-settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg><small>설정</small></button>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div class="page" id="pg-settings">
+  <div class="hd"><div class="hd-t">설정</div></div>
+  <div class="ct">
+    <div class="cd cdr" style="display:flex;align-items:center;gap:12px;">
+      <div class="avatar" style="width:44px;height:44px;font-size:24px;">🍊</div>
+      <div style="flex:1;">
+        <p style="font-size:16px;font-weight:600;margin:0;">태태</p>
+        <p style="font-size:12px;color:var(--g400);margin:0;">코스 3개 · 좋아요 24개</p>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:16px;border:1px solid var(--g100);margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px;border-bottom:1px solid var(--g100);cursor:pointer;" onclick="nav('pg-archive')">
+        <span style="font-size:14px;">코스 아카이브</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px;border-bottom:1px solid var(--g100);cursor:pointer;">
+        <span style="font-size:14px;">알림 설정</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px;border-bottom:1px solid var(--g100);cursor:pointer;">
+        <span style="font-size:14px;">친구 초대하기</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px;cursor:pointer;">
+        <span style="font-size:14px;">이용약관</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <!-- 본앱 유도 -->
+    <div style="margin-top:16px;padding:16px;background:linear-gradient(135deg,var(--or-50),var(--pk-50));border-radius:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+      <div style="font-size:28px;">📱</div>
+      <div style="flex:1;">
+        <p style="font-size:14px;font-weight:600;color:var(--or-dk);margin:0;">떠나 앱 다운로드</p>
+        <p style="font-size:12px;color:var(--g500);margin:0;">영상으로 더 멋지게 기록해봐!</p>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <button style="width:100%;margin-top:32px;padding:12px;border:none;background:none;color:var(--g400);font-size:13px;cursor:pointer;text-decoration:underline;">서비스 탈퇴</button>
+  </div>
+  <div class="tab">
+    <button class="ti" onclick="nav('pg-home')"><svg viewBox="0 0 24 24"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4z"/></svg><small>홈</small></button>
+    <button class="ti" onclick="nav('pg-explore')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><small>피드</small></button>
+    <button class="ti on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><small>설정</small></button>
+  </div>
+</div>
+
+<!-- ===== 코스 아카이브 (캘린더) ===== -->
+<div class="page" id="pg-archive">
+  <div class="hd">
+    <button class="hd-b" onclick="nav('pg-settings')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <div class="hd-t">코스 아카이브</div>
+    <div style="width:36px;"></div>
+  </div>
+  <div class="ct anim">
+    <h3 style="font-size:16px;font-weight:700;text-align:center;margin-bottom:16px;">2026년 6월</h3>
+    <div class="cal-grid" style="margin-bottom:20px;">
+      <div class="cal-header">일</div><div class="cal-header">월</div><div class="cal-header">화</div><div class="cal-header">수</div><div class="cal-header">목</div><div class="cal-header">금</div><div class="cal-header">토</div>
+      <div class="cal-day"></div><div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div><div class="cal-day">4</div><div class="cal-day">5</div><div class="cal-day">6</div>
+      <div class="cal-day">7</div><div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div><div class="cal-day">11</div><div class="cal-day">12</div><div class="cal-day has">13</div>
+      <div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day has">20</div>
+      <div class="cal-day">21</div><div class="cal-day">22</div><div class="cal-day">23</div><div class="cal-day">24</div><div class="cal-day has" onclick="nav('pg-course-detail')">25</div><div class="cal-day today">26</div><div class="cal-day">27</div>
+      <div class="cal-day">28</div><div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div>
+    </div>
+    <p class="sec">최근 코스</p>
+    <div class="course-card" onclick="nav('pg-course-detail')">
+      <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400&h=140&fit=crop" style="height:100px;">
+      <div class="course-card-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span class="tag">데이트</span><span style="font-size:11px;color:var(--g400);">6월 25일</span>
+        </div>
+        <h3 style="font-size:14px;font-weight:600;margin:0;">성수동 감성 데이트 코스</h3>
+        <p style="font-size:12px;color:var(--g400);margin:2px 0 0;">장소 4곳</p>
+      </div>
+    </div>
+    <div class="course-card">
+      <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=140&fit=crop" style="height:100px;">
+      <div class="course-card-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span class="tag">카페투어</span><span style="font-size:11px;color:var(--g400);">6월 20일</span>
+        </div>
+        <h3 style="font-size:14px;font-weight:600;margin:0;">망원동 카페 투어</h3>
+        <p style="font-size:12px;color:var(--g400);margin:2px 0 0;">장소 3곳</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- Navigation panel -->
+<div style="position:fixed;top:20px;right:20px;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,.1);font-size:11px;line-height:2;z-index:999;max-height:90vh;overflow-y:auto;">
+<strong style="color:var(--g900);font-size:12px;">화면 이동</strong><br>
+<span style="font-size:10px;color:var(--g400);font-weight:600;">기본</span><br>
+<a onclick="nav('pg-ob1')" style="cursor:pointer;color:var(--or);">온보딩</a><br>
+<a onclick="nav('pg-login')" style="cursor:pointer;color:var(--or);">로그인</a><br>
+<a onclick="nav('pg-home')" style="cursor:pointer;color:var(--or);">홈 (지도)</a><br>
+<span style="font-size:10px;color:var(--g400);font-weight:600;margin-top:4px;display:block;">나의 오늘</span>
+<a onclick="nav('pg-share-select')" style="cursor:pointer;color:var(--or);">그룹 선택</a><br>
+<a onclick="nav('pg-recording')" style="cursor:pointer;color:var(--or);">기록 모드</a><br>
+<a onclick="nav('pg-place-select')" style="cursor:pointer;color:var(--or);">장소 선택</a><br>
+<a onclick="nav('pg-camera')" style="cursor:pointer;color:var(--or);">카메라</a><br>
+<a onclick="nav('pg-recording-1')" style="cursor:pointer;color:var(--or);">1곳 기록됨</a><br>
+<a onclick="nav('pg-finish')" style="cursor:pointer;color:var(--or);">오늘 종료</a><br>
+<a onclick="nav('pg-home-resume')" style="cursor:pointer;color:var(--or);">홈 (이어하기)</a><br>
+<a onclick="nav('pg-resume-sheet')" style="cursor:pointer;color:var(--or);">이어하기 시트</a><br>
+<span style="font-size:10px;color:var(--g400);font-weight:600;margin-top:4px;display:block;">코스로 떠나기</span>
+<a onclick="nav('pg-course-detail')" style="cursor:pointer;color:var(--or);">코스 상세</a><br>
+<a onclick="nav('pg-course-share')" style="cursor:pointer;color:var(--or);">코스 그룹 선택</a><br>
+<a onclick="nav('pg-course-nav')" style="cursor:pointer;color:var(--or);">코스 진행 중</a><br>
+<a onclick="nav('pg-course-edit')" style="cursor:pointer;color:var(--or);">코스 편집</a><br>
+<a onclick="nav('pg-course-resume')" style="cursor:pointer;color:var(--or);">코스 복구</a><br>
+<span style="font-size:10px;color:var(--g400);font-weight:600;margin-top:4px;display:block;">탭</span>
+<a onclick="nav('pg-explore')" style="cursor:pointer;color:var(--or);">탐색/피드</a><br>
+<a onclick="nav('pg-settings')" style="cursor:pointer;color:var(--or);">설정</a><br>
+<a onclick="nav('pg-archive')" style="cursor:pointer;color:var(--or);">아카이브</a>
+</div>
+
+<script>
+function nav(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el){el.classList.add('active');el.scrollTop=0;}
+}
+function showSheet(id){document.getElementById(id).style.display='block';}
+function hideSheet(id){document.getElementById(id).style.display='none';}
+document.querySelectorAll('.ch').forEach(c=>c.addEventListener('click',function(){this.closest('div').querySelectorAll('.ch').forEach(cc=>cc.classList.remove('on'));this.classList.add('on');}));
+</script>
+</body>
+</html>
