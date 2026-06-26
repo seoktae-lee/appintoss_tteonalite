@@ -2,11 +2,14 @@ import { useState } from "react";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NicknamePage } from "./pages/NicknamePage";
+import { HomePage } from "./pages/HomePage";
+import { RecordingPage } from "./pages/RecordingPage";
 import { BottomTabBar } from "./components/BottomTabBar";
-import { clearAuth } from "./api/client";
-import type { User, AppTab, LoginResponse } from "./api/types";
+import { useTodaySession } from "./hooks/useTodaySession";
+import { clearAuth, api } from "./api/client";
+import type { User, AppTab, LoginResponse, Course } from "./api/types";
 
-type SubPage = "tabs" | "recording" | "place-select" | "camera" | "course-detail" | "course-nav" | "course-edit" | "archive";
+type SubPage = "tabs" | "recording" | "course-detail";
 
 function App() {
   const [onboardingSeen, setOnboardingSeen] = useState(
@@ -50,42 +53,111 @@ function App() {
     );
   }
 
-  // 서브페이지들은 이후 개발에서 추가
-  if (subPage !== "tabs") {
+  return <LoggedInApp user={user} tab={tab} setTab={setTab} subPage={subPage} setSubPage={setSubPage} onLogout={handleWithdraw} />;
+}
+
+interface LoggedInProps {
+  user: User;
+  tab: AppTab;
+  setTab: (t: AppTab) => void;
+  subPage: SubPage;
+  setSubPage: (p: SubPage) => void;
+  onLogout: () => void;
+}
+
+function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: LoggedInProps) {
+  const { session, startSession, addPlace, finishSession, checkActive } = useTodaySession();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
+  const loadCourses = async () => {
+    try {
+      const res = await api.get<{ courses: Course[] }>("/api/courses/explore");
+      setCourses(res.courses);
+    } catch {}
+  };
+
+  useState(() => { loadCourses(); });
+
+  const handleStartRecording = async () => {
+    if (session) {
+      setSubPage("recording");
+      return;
+    }
+    await startSession();
+    setSubPage("recording");
+  };
+
+  const handleFinishRecording = async (data: { title?: string; tag?: string; isPublic?: boolean }) => {
+    await finishSession(data);
+    setSubPage("tabs");
+    loadCourses();
+  };
+
+  // 기록 모드
+  if (subPage === "recording" && session) {
+    return (
+      <RecordingPage
+        session={session}
+        onAddPlace={addPlace}
+        onFinish={handleFinishRecording}
+        onBack={() => setSubPage("tabs")}
+      />
+    );
+  }
+
+  // 코스 상세 (추후 개발)
+  if (subPage === "course-detail") {
     return (
       <div style={{ padding: 20 }}>
         <button onClick={() => setSubPage("tabs")} style={{ marginBottom: 12, padding: "8px 16px", border: "1px solid var(--g200)", borderRadius: 8, background: "#fff", cursor: "pointer" }}>
           ← 뒤로
         </button>
-        <p style={{ color: "var(--g500)" }}>서브페이지: {subPage} (개발 중)</p>
+        <p style={{ color: "var(--g500)" }}>코스 상세 (개발 중)</p>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", paddingBottom: 82 }}>
+    <div style={{ minHeight: "100vh" }}>
       {tab === "home" && (
-        <div style={{ padding: 20 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>홈 (지도)</h2>
-          <p style={{ color: "var(--g500)", fontSize: 14 }}>홈탭 개발 예정</p>
-          <button onClick={() => setSubPage("recording")} style={{
-            width: "100%", marginTop: 20, padding: 16, borderRadius: 100, border: "none",
-            background: "var(--or)", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer",
-          }}>나의 오늘</button>
-        </div>
+        <HomePage
+          nickname={user.nickname || ""}
+          session={session}
+          courses={courses}
+          onStartRecording={handleStartRecording}
+          onResumeRecording={() => setSubPage("recording")}
+          onCourseDetail={(id) => { setSelectedCourseId(id); setSubPage("course-detail"); }}
+        />
       )}
       {tab === "explore" && (
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: "20px 20px 100px" }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>코스 탐색</h2>
           <p style={{ color: "var(--g500)", fontSize: 14 }}>탐색탭 개발 예정</p>
         </div>
       )}
       {tab === "settings" && (
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: "20px 20px 100px" }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>설정</h2>
-          <p style={{ color: "var(--g500)", fontSize: 14, marginBottom: 20 }}>닉네임: {user.nickname}</p>
-          <button onClick={handleWithdraw} style={{
-            padding: "10px 20px", border: "none", background: "none",
+          <div style={{ background: "var(--g50)", borderRadius: 12, padding: 16, display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--or-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🍊</div>
+            <div>
+              <p style={{ fontSize: 16, fontWeight: 600 }}>{user.nickname}</p>
+              <p style={{ fontSize: 12, color: "var(--g400)" }}>코스 {courses.filter(c => c.isMine).length}개</p>
+            </div>
+          </div>
+          <div style={{ background: "#fff", borderRadius: 16, border: "1px solid var(--g100)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, borderBottom: "1px solid var(--g100)", cursor: "pointer" }}>
+              <span style={{ fontSize: 14 }}>이용약관</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, cursor: "pointer" }}>
+              <span style={{ fontSize: 14 }}>떠나 앱 다운로드</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+          <button onClick={onLogout} style={{
+            width: "100%", marginTop: 32, padding: 12, border: "none", background: "none",
             color: "var(--g400)", fontSize: 13, cursor: "pointer", textDecoration: "underline",
           }}>서비스 탈퇴</button>
         </div>
