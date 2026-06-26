@@ -1,0 +1,17 @@
+{
+  "appName": "tteonalite",
+  "permissions": [
+    {
+      "name": "geolocation",
+      "access": "access"
+    },
+    {
+      "name": "camera",
+      "access": "access"
+    },
+    {
+      "name": "photos",
+      "access": "read"
+    }
+  ]
+}

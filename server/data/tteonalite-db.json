@@ -6,6 +6,13 @@
       "tossUserKey": null,
       "nickname": "태태",
       "createdAt": "2026-06-26T15:31:44.738Z"
+    },
+    {
+      "id": "ecd72432-021c-4039-839d-357f45e59523",
+      "anonymousKey": "dev-bypass-key",
+      "tossUserKey": null,
+      "nickname": null,
+      "createdAt": "2026-06-26T16:21:28.603Z"
     }
   ],
   "courses": [],
