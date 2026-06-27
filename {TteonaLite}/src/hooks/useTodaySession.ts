@@ -42,6 +42,13 @@ export function useTodaySession() {
     } finally { setLoading(false); }
   }, []);
 
+  const removePlace = useCallback(async (placeId: string) => {
+    try {
+      const res = await api.post<{ session: TodaySession }>("/api/courses/today/remove-place", { placeId });
+      setSession(res.session);
+    } catch {}
+  }, []);
+
   const discardSession = useCallback(async () => {
     setLoading(true);
     try {
@@ -50,5 +57,5 @@ export function useTodaySession() {
     } finally { setLoading(false); }
   }, []);
 
-  return { session, loading, startSession, addPlace, finishSession, checkActive, discardSession };
+  return { session, loading, startSession, addPlace, removePlace, finishSession, checkActive, discardSession };
 }

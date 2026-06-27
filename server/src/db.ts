@@ -122,6 +122,16 @@ export const db = {
     return session;
   },
 
+  removePlaceFromSession(sessionId: string, placeId: string) {
+    const data = load();
+    const session = data.todaySessions.find(s => s.id === sessionId);
+    if (session) {
+      session.places = session.places.filter(p => p.id !== placeId);
+      save(data);
+    }
+    return session;
+  },
+
   finishSession(sessionId: string): TodaySession | undefined {
     const data = load();
     const session = data.todaySessions.find(s => s.id === sessionId);

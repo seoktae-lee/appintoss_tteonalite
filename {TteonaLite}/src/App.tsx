@@ -70,7 +70,7 @@ interface LoggedInProps {
 }
 
 function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: LoggedInProps) {
-  const { session, startSession, addPlace, finishSession, checkActive, discardSession } = useTodaySession();
+  const { session, startSession, addPlace, removePlace, finishSession, checkActive, discardSession } = useTodaySession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -85,16 +85,22 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
   useState(() => { loadCourses(); });
 
   const handleStartRecording = async () => {
-    if (session) {
+    if (session && session.places.length > 0) {
       setSubPage("recording");
       return;
     }
+    // 장소 0개인 빈 세션은 폐기 후 새로 시작
+    if (session && session.places.length === 0) {
+      await discardSession();
+    }
     setIsTransitioning(true);
     try {
-      const newSession = await startSession();
-      if (newSession) {
-        setSubPage("recording");
-      }
+      await startSession();
+      // startSession 내부에서 setSession이 호출되므로 약간 대기
+      await new Promise(r => setTimeout(r, 100));
+      setSubPage("recording");
+    } catch {
+      setSubPage("tabs");
     } finally {
       setIsTransitioning(false);
     }
@@ -111,20 +117,24 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
     return <NaruLoading message="잠시만 기다려줘!" />;
   }
 
-  // 기록 모드
+  // 기록 모드 — session 없으면 로딩 표시 (서버에서 불러오는 중)
+  if (subPage === "recording" && !session) {
+    return <NaruLoading message="기록을 불러오는 중!" />;
+  }
   if (subPage === "recording" && session) {
     return (
       <RecordingPage
         session={session}
         onAddPlace={addPlace}
+        onRemovePlace={removePlace}
         onFinish={handleFinishRecording}
         onBack={() => setSubPage("tabs")}
       />
     );
   }
 
-  // 이어하기 시트
-  if (subPage === "resume-sheet" && session) {
+  // 이어하기 시트 (장소 1개 이상일 때만)
+  if (subPage === "resume-sheet" && session && session.places.length > 0) {
     return (
       <div style={{
         minHeight: "100vh", background: "rgba(0,0,0,.4)",
@@ -149,8 +159,14 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
           </p>
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
             <button onClick={async () => {
-              await checkActive();
-              setSubPage("recording");
+              setIsTransitioning(true);
+              try {
+                await checkActive();
+                await new Promise(r => setTimeout(r, 100));
+                setSubPage("recording");
+              } finally {
+                setIsTransitioning(false);
+              }
             }} style={{
               width: "100%", padding: 16, borderRadius: 100, border: "none",
               background: "var(--or)", color: "#fff", fontSize: 16, fontWeight: 700,
@@ -166,7 +182,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
                 await discardSession();
                 setSubPage("tabs");
               } finally {
-                setTimeout(() => setIsTransitioning(false), 300);
+                setIsTransitioning(false);
               }
             }} style={{
               width: "100%", padding: 14, borderRadius: 100,

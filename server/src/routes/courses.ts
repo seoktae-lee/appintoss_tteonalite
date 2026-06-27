@@ -54,6 +54,15 @@ router.post("/today/add-place", async (req: AuthRequest, res: Response): Promise
   res.json({ session: updated, place });
 });
 
+router.post("/today/remove-place", (req: AuthRequest, res: Response): void => {
+  const session = db.getActiveSession(req.userId!);
+  if (!session) { res.status(400).json({ error: "기록 중인 세션이 없어요." }); return; }
+  const { placeId } = req.body as { placeId: string };
+  if (!placeId) { res.status(400).json({ error: "placeId가 필요해요." }); return; }
+  const updated = db.removePlaceFromSession(session.id, placeId);
+  res.json({ session: updated });
+});
+
 router.post("/today/discard", (req: AuthRequest, res: Response): void => {
   const session = db.getActiveSession(req.userId!);
   if (!session) { res.json({ ok: true }); return; }
@@ -98,6 +107,29 @@ router.post("/today/finish", (req: AuthRequest, res: Response): void => {
 router.get("/my", (req: AuthRequest, res: Response): void => {
   const courses = db.getCoursesByUser(req.userId!);
   res.json({ courses });
+});
+
+router.get("/search", (req: AuthRequest, res: Response): void => {
+  const q = (req.query.q as string || "").trim().toLowerCase();
+  if (!q) { res.json({ courses: [] }); return; }
+  const all = db.getPublicCourses();
+  const results = all.filter(c => {
+    const titleMatch = c.title.toLowerCase().includes(q);
+    const placeMatch = c.places.some(p =>
+      (p.address || "").toLowerCase().includes(q) ||
+      (p.placeName || "").toLowerCase().includes(q) ||
+      (p.memo || "").toLowerCase().includes(q)
+    );
+    return titleMatch || placeMatch;
+  }).slice(0, 20);
+  const enriched = results.map(c => ({
+    ...c,
+    authorNickname: db.findUserById(c.userId)?.nickname || "익명",
+    isLiked: c.likes.includes(req.userId!),
+    isBookmarked: c.bookmarks.includes(req.userId!),
+    likeCount: c.likes.length,
+  }));
+  res.json({ courses: enriched });
 });
 
 router.get("/explore", (req: AuthRequest, res: Response): void => {
