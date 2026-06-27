@@ -245,7 +245,9 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
         <div style={{ padding: "20px 20px 100px" }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>설정</h2>
           <div style={{ background: "var(--g50)", borderRadius: 12, padding: 16, display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--or-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🍊</div>
+            <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", background: "var(--or-100)", flexShrink: 0 }}>
+              <img src={new URL("./assets/mascot/tteoni-front.png", import.meta.url).href} alt="나루" style={{ width: 64, height: 64, objectFit: "cover", marginTop: -4, marginLeft: -10 }} />
+            </div>
             <div>
               <p style={{ fontSize: 16, fontWeight: 600 }}>{user.nickname}</p>
               <p style={{ fontSize: 12, color: "var(--g400)" }}>코스 {courses.filter(c => c.isMine).length}개</p>
