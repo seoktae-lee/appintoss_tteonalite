@@ -33,7 +33,7 @@ export function RecordingPage({ session, onAddPlace, onFinish, onBack }: Props) 
     import("leaflet").then(L => {
       const map = L.map(mapRef.current!, { zoomControl: false, attributionControl: false })
         .setView([location.lat, location.lng], 16);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
 
       L.circleMarker([location.lat, location.lng], {
         radius: 8, fillColor: "#FF6B35", fillOpacity: 1, color: "#fff", weight: 3,

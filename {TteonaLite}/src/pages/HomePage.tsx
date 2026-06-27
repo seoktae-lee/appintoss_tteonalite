@@ -30,7 +30,7 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
       const map = L.map(mapRef.current!, { zoomControl: false, attributionControl: false })
         .setView([location.lat, location.lng], 14);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
       }).addTo(map);
 

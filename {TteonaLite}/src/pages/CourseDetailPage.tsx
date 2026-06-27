@@ -44,7 +44,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
       const map = L.map(mapRef.current!, { zoomControl: false, attributionControl: false })
         .fitBounds(bounds, { padding: [30, 30] });
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
 
       // 경로 점선
       if (places.length > 1) {
