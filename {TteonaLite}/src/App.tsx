@@ -256,11 +256,11 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
               <span style={{ fontSize: 14 }}>코스 아카이브</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, borderBottom: "1px solid var(--g100)", cursor: "pointer" }}>
+            <div onClick={() => window.open("https://seoktae-lee.github.io/appintoss_tteonalite_terms/", "_blank")} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, borderBottom: "1px solid var(--g100)", cursor: "pointer" }}>
               <span style={{ fontSize: 14 }}>이용약관</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, cursor: "pointer" }}>
+            <div onClick={() => window.open("https://apps.apple.com/kr/app/%EB%96%A0%EB%82%98/id6767218543", "_blank")} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 15, cursor: "pointer" }}>
               <span style={{ fontSize: 14 }}>떠나 앱 다운로드</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
