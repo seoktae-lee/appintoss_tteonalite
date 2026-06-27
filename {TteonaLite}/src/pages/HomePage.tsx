@@ -37,8 +37,9 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
   useEffect(() => { getLocation(); }, [getLocation]);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return;
-    if (!location) return;
+    if (!mapRef.current || !location) return;
+    // 코스 변경 시 지도 재생성
+    if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null; }
 
     import("leaflet").then(L => {
       const map = L.map(mapRef.current!, { zoomControl: false, attributionControl: false })
@@ -105,7 +106,7 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
             onChange={e => handleSearch(e.target.value)}
             onFocus={() => setShowSearch(true)}
             placeholder="코스명, 지역 검색"
-            style={{ flex: 1, border: "none", outline: "none", fontSize: 14, background: "transparent", fontFamily: "inherit", padding: "6px 0" }}
+            style={{ flex: 1, border: "none", outline: "none", fontSize: 16, background: "transparent", fontFamily: "inherit", padding: "6px 0" }}
           />
           {searchQuery && (
             <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowSearch(false); }} style={{
@@ -161,7 +162,17 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
         </div>
       )}
 
-      {/* 하단 플로팅 버튼 */}
+      {/* 내 위치 버튼 (우하단) */}
+      <button onClick={getLocation} style={{
+        position: "absolute", bottom: 80, right: 16, zIndex: 1000,
+        width: 44, height: 44, borderRadius: "50%", background: "#fff", border: "none",
+        boxShadow: "0 2px 8px rgba(0,0,0,.1)", cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" strokeWidth="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      </button>
+
+      {/* 하단 중앙 버튼 */}
       <div style={{
         position: "absolute", bottom: 16, left: 0, right: 0, zIndex: 1000,
         display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
@@ -184,13 +195,6 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
         }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           나의 오늘
-        </button>
-        <button onClick={getLocation} style={{
-          width: 48, height: 48, borderRadius: "50%", background: "#fff", border: "none",
-          boxShadow: "0 2px 8px rgba(0,0,0,.1)", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" strokeWidth="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
         </button>
       </div>
     </div>
