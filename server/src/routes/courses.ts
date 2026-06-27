@@ -54,6 +54,13 @@ router.post("/today/add-place", async (req: AuthRequest, res: Response): Promise
   res.json({ session: updated, place });
 });
 
+router.post("/today/discard", (req: AuthRequest, res: Response): void => {
+  const session = db.getActiveSession(req.userId!);
+  if (!session) { res.json({ ok: true }); return; }
+  db.finishSession(session.id);
+  res.json({ ok: true });
+});
+
 router.post("/today/finish", (req: AuthRequest, res: Response): void => {
   const session = db.getActiveSession(req.userId!);
   if (!session) { res.status(400).json({ error: "기록 중인 세션이 없어요." }); return; }

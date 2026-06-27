@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api/client";
+import { NaruLoading } from "../components/NaruLoading";
 import tteoniGuide from "../assets/mascot/tteoni-guide.png";
 
 interface Props { onDone: (nickname: string) => void }
@@ -23,6 +24,8 @@ export function NicknamePage({ onDone }: Props) {
       setIsLoading(false);
     }
   };
+
+  if (isLoading) return <NaruLoading message="별명을 저장하는 중!" />;
 
   return (
     <div style={{

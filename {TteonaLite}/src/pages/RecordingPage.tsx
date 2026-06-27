@@ -2,18 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { ConfirmDialog } from "@toss/tds-mobile";
 import { useLocation } from "../hooks/useLocation";
 import { uploadPhoto } from "../api/client";
-import type { TodaySession, Place, CourseTag, TAG_LABELS } from "../api/types";
-import tteoniThumbsup from "../assets/mascot/tteoni-thumbsup.png";
+import type { TodaySession, Place, CourseTag } from "../api/types";
+import { NaruLoading } from "../components/NaruLoading";
 import "leaflet/dist/leaflet.css";
-
-const TAGS: { key: CourseTag; label: string }[] = [
-  { key: "date", label: "데이트" },
-  { key: "travel", label: "여행" },
-  { key: "food", label: "맛집탐방" },
-  { key: "cafe", label: "카페투어" },
-  { key: "walk", label: "산책" },
-  { key: "etc", label: "기타" },
-];
 
 interface Props {
   session: TodaySession;
@@ -24,13 +15,11 @@ interface Props {
 
 export function RecordingPage({ session, onAddPlace, onFinish, onBack }: Props) {
   const { location, getLocation } = useLocation();
-  const [mode, setMode] = useState<"map" | "camera" | "finish">("map");
   const [memo, setMemo] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [showMemo, setShowMemo] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showFinishDialog, setShowFinishDialog] = useState(false);
-  const [finishTag, setFinishTag] = useState<CourseTag>("etc");
-  const [finishTitle, setFinishTitle] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -64,15 +53,22 @@ export function RecordingPage({ session, onAddPlace, onFinish, onBack }: Props) 
     });
   }, [location, mode, session.places.length]);
 
-  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !location) return;
+    if (!file) return;
+    setPendingFile(file);
+    setShowMemo(true);
+  };
+
+  const handleConfirmPlace = async () => {
+    if (!pendingFile || !location) return;
     setIsUploading(true);
     try {
-      const photoUrl = await uploadPhoto(file);
+      const photoUrl = await uploadPhoto(pendingFile);
       await onAddPlace({ lat: location.lat, lng: location.lng, memo: memo || undefined, photoUrl });
       setMemo("");
-      setMode("map");
+      setPendingFile(null);
+      setShowMemo(false);
     } catch (err) {
       alert("장소 추가 실패: " + (err instanceof Error ? err.message : ""));
     } finally {
@@ -80,55 +76,28 @@ export function RecordingPage({ session, onAddPlace, onFinish, onBack }: Props) 
     }
   };
 
+  const handleTakePhoto = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
   const handleFinish = async () => {
     try {
-      await onFinish({ title: finishTitle || undefined, tag: finishTag, isPublic });
+      await onFinish({});
       setShowFinishDialog(false);
     } catch (err) {
       alert("저장 실패: " + (err instanceof Error ? err.message : ""));
     }
   };
 
-  if (mode === "camera") {
-    return (
-      <div style={{ height: "100vh", background: "#111", display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <button onClick={() => setMode("map")} style={{ background: "none", border: "none", color: "#fff", fontSize: 24, cursor: "pointer" }}>✕</button>
-          <span style={{ color: "rgba(255,255,255,.6)", fontSize: 13 }}>
-            {location ? "위치 확인됨" : "위치 확인 중..."}
-          </span>
-        </div>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", gap: 16 }}>
-          <input
-            value={memo}
-            onChange={e => setMemo(e.target.value)}
-            placeholder="이 장소에 대한 메모 (선택)"
-            style={{
-              width: "100%", padding: "12px 16px", borderRadius: 12,
-              border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.1)",
-              color: "#fff", fontSize: 14, outline: "none", fontFamily: "inherit",
-            }}
-          />
-          <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleCapture} style={{ display: "none" }} />
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} style={{
-            width: 72, height: 72, borderRadius: "50%", background: "#fff",
-            border: "4px solid var(--g300)", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            opacity: isUploading ? 0.5 : 1,
-          }}>
-            {isUploading ? (
-              <span style={{ fontSize: 12, color: "var(--g500)" }}>업로드중</span>
-            ) : (
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--g700)" strokeWidth="2">
-                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
-              </svg>
-            )}
-          </button>
-          <p style={{ color: "rgba(255,255,255,.4)", fontSize: 12 }}>사진을 찍거나 갤러리에서 선택해봐</p>
-        </div>
-      </div>
-    );
-  }
+  // 숨겨진 파일 input
+  const hiddenInput = (
+    <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} style={{ display: "none" }} />
+  );
+
+  if (isUploading) return <NaruLoading message="장소를 저장하는 중!" />;
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
@@ -182,9 +151,60 @@ export function RecordingPage({ session, onAddPlace, onFinish, onBack }: Props) 
         </div>
       )}
 
+      {hiddenInput}
+
+      {/* 메모 입력 바텀시트 */}
+      {showMemo && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 2000,
+          display: "flex", alignItems: "flex-end",
+        }}>
+          <div style={{
+            width: "100%", background: "#fff", borderRadius: "20px 20px 0 0",
+            padding: "24px 20px 36px",
+          }}>
+            <div style={{ width: 36, height: 4, background: "var(--g300)", borderRadius: 2, margin: "0 auto 16px" }} />
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>장소 추가</h3>
+            <p style={{ fontSize: 13, color: "var(--g400)", marginBottom: 16 }}>
+              {pendingFile?.name ? "사진이 선택됐어! 메모를 남겨봐" : ""}
+            </p>
+            {pendingFile && (
+              <img
+                src={URL.createObjectURL(pendingFile)}
+                alt=""
+                style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 12, marginBottom: 12 }}
+              />
+            )}
+            <input
+              value={memo}
+              onChange={e => setMemo(e.target.value)}
+              placeholder="이 장소에 대한 메모 (선택)"
+              style={{
+                width: "100%", padding: "12px 16px", borderRadius: 12,
+                border: "1.5px solid var(--g200)", fontSize: 14, outline: "none",
+                fontFamily: "inherit", marginBottom: 16,
+              }}
+            />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => { setShowMemo(false); setPendingFile(null); setMemo(""); }} style={{
+                flex: 1, padding: 14, borderRadius: 100, border: "1.5px solid var(--g200)",
+                background: "#fff", color: "var(--g500)", fontSize: 15, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+              }}>취소</button>
+              <button onClick={handleConfirmPlace} disabled={isUploading} style={{
+                flex: 1, padding: 14, borderRadius: 100, border: "none",
+                background: "var(--or)", color: "#fff", fontSize: 15, fontWeight: 700,
+                cursor: "pointer", fontFamily: "inherit",
+                opacity: isUploading ? 0.6 : 1,
+              }}>{isUploading ? "저장 중..." : "장소 추가"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 하단 버튼 */}
       <div style={{ padding: "12px 16px 24px", background: "#fff", display: "flex", gap: 10 }}>
-        <button onClick={() => setMode("camera")} style={{
+        <button onClick={handleTakePhoto} style={{
           flex: 1, padding: 14, borderRadius: 100, border: "none",
           background: "var(--or)", color: "#fff", fontSize: 15, fontWeight: 700,
           cursor: "pointer", fontFamily: "inherit",

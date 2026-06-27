@@ -42,5 +42,13 @@ export function useTodaySession() {
     } finally { setLoading(false); }
   }, []);
 
-  return { session, loading, startSession, addPlace, finishSession, checkActive };
+  const discardSession = useCallback(async () => {
+    setLoading(true);
+    try {
+      await api.post("/api/courses/today/discard");
+      setSession(null);
+    } finally { setLoading(false); }
+  }, []);
+
+  return { session, loading, startSession, addPlace, finishSession, checkActive, discardSession };
 }

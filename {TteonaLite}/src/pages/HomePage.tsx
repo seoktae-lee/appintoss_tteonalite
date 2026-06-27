@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "../hooks/useLocation";
+import { useWeather } from "../hooks/useWeather";
 import type { TodaySession, Course } from "../api/types";
 import tteoniGuide from "../assets/mascot/tteoni-guide.png";
 import "leaflet/dist/leaflet.css";
@@ -15,6 +16,7 @@ interface Props {
 
 export function HomePage({ nickname, session, courses, onStartRecording, onResumeRecording, onCourseDetail }: Props) {
   const { location, getLocation } = useLocation();
+  const { weather, icon: weatherIcon } = useWeather(location?.lat, location?.lng);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
 
@@ -87,6 +89,27 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
           <span style={{ fontSize: 14, color: "var(--g400)", flex: 1 }}>코스명, 지역 검색</span>
         </div>
       </div>
+
+      {/* 날씨 위젯 */}
+      {weather && (
+        <div style={{
+          position: "absolute", top: 62, left: 16, right: 16, zIndex: 1000,
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            background: "rgba(255,255,255,.92)", backdropFilter: "blur(8px)",
+            borderRadius: 12, padding: "8px 14px",
+            boxShadow: "0 2px 8px rgba(0,0,0,.06)",
+          }}>
+            <span style={{ fontSize: 20 }}>{weatherIcon}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--g900)", margin: 0 }}>
+                {weather.city} {weather.temperature}° · {weather.comment}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 하단 플로팅 버튼 */}
       <div style={{

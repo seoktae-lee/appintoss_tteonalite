@@ -5,6 +5,7 @@ import path from "path";
 import authRouter from "./routes/auth";
 import coursesRouter from "./routes/courses";
 import uploadRouter from "./routes/upload";
+import { getWeather } from "./services/weather";
 
 const app = express();
 const PORT = process.env.PORT || 3004;
@@ -21,6 +22,13 @@ app.use("/api/courses", coursesRouter);
 app.use("/api/upload", uploadRouter);
 
 app.get("/health", (_req, res) => res.json({ status: "ok", app: "tteonalite" }));
+
+app.get("/api/weather", async (req, res) => {
+  const lat = parseFloat(req.query.lat as string) || undefined;
+  const lng = parseFloat(req.query.lng as string) || undefined;
+  const weather = await getWeather(lat, lng);
+  res.json(weather);
+});
 
 app.listen(PORT, () => {
   console.log(`TteonaLite server running on port ${PORT}`);

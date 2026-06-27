@@ -8,11 +8,12 @@ import { ExploreTab } from "./pages/ExploreTab";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
 import { ArchivePage } from "./pages/ArchivePage";
 import { BottomTabBar } from "./components/BottomTabBar";
+import { NaruLoading } from "./components/NaruLoading";
 import { useTodaySession } from "./hooks/useTodaySession";
 import { clearAuth, api } from "./api/client";
 import type { User, AppTab, LoginResponse, Course } from "./api/types";
 
-type SubPage = "tabs" | "recording" | "course-detail" | "archive";
+type SubPage = "tabs" | "recording" | "course-detail" | "archive" | "resume-sheet";
 
 function App() {
   const [onboardingSeen, setOnboardingSeen] = useState(
@@ -69,9 +70,10 @@ interface LoggedInProps {
 }
 
 function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: LoggedInProps) {
-  const { session, startSession, addPlace, finishSession, checkActive } = useTodaySession();
+  const { session, startSession, addPlace, finishSession, checkActive, discardSession } = useTodaySession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const loadCourses = async () => {
     try {
@@ -87,8 +89,15 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
       setSubPage("recording");
       return;
     }
-    await startSession();
-    setSubPage("recording");
+    setIsTransitioning(true);
+    try {
+      const newSession = await startSession();
+      if (newSession) {
+        setSubPage("recording");
+      }
+    } finally {
+      setIsTransitioning(false);
+    }
   };
 
   const handleFinishRecording = async (data: { title?: string; tag?: string; isPublic?: boolean }) => {
@@ -96,6 +105,11 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
     setSubPage("tabs");
     loadCourses();
   };
+
+  // 로딩
+  if (isTransitioning) {
+    return <NaruLoading message="잠시만 기다려줘!" />;
+  }
 
   // 기록 모드
   if (subPage === "recording" && session) {
@@ -106,6 +120,69 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
         onFinish={handleFinishRecording}
         onBack={() => setSubPage("tabs")}
       />
+    );
+  }
+
+  // 이어하기 시트
+  if (subPage === "resume-sheet" && session) {
+    return (
+      <div style={{
+        minHeight: "100vh", background: "rgba(0,0,0,.4)",
+        display: "flex", alignItems: "flex-end",
+      }}>
+        <div style={{
+          width: "100%", background: "#fff", borderRadius: "20px 20px 0 0",
+          padding: "28px 20px 40px", display: "flex", flexDirection: "column", alignItems: "center",
+        }}>
+          <div style={{ width: 36, height: 4, background: "var(--g300)", borderRadius: 2, marginBottom: 20 }} />
+          <div style={{
+            width: 64, height: 64, borderRadius: "50%", background: "var(--or-100)",
+            display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
+          }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--or)" strokeWidth="2">
+              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+            </svg>
+          </div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>오늘 기록이 남아있어요</h2>
+          <p style={{ fontSize: 14, color: "var(--g400)", marginBottom: 24 }}>
+            장소 {session.places.length}곳 · {new Date(session.startedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
+            <button onClick={async () => {
+              await checkActive();
+              setSubPage("recording");
+            }} style={{
+              width: "100%", padding: 16, borderRadius: 100, border: "none",
+              background: "var(--or)", color: "#fff", fontSize: 16, fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              이어서 기록하기
+            </button>
+            <button onClick={async () => {
+              setIsTransitioning(true);
+              try {
+                await discardSession();
+                setSubPage("tabs");
+              } finally {
+                setTimeout(() => setIsTransitioning(false), 300);
+              }
+            }} style={{
+              width: "100%", padding: 14, borderRadius: 100,
+              border: "1.5px solid var(--g200)", background: "#fff",
+              color: "var(--g700)", fontSize: 15, fontWeight: 600,
+              cursor: "pointer", fontFamily: "inherit",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g500)" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              새로 시작하기
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -141,7 +218,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
           session={session}
           courses={courses}
           onStartRecording={handleStartRecording}
-          onResumeRecording={() => setSubPage("recording")}
+          onResumeRecording={() => setSubPage("resume-sheet")}
           onCourseDetail={(id) => { setSelectedCourseId(id); setSubPage("course-detail"); }}
         />
       )}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ConfirmDialog } from "@toss/tds-mobile";
 import { api } from "../api/client";
 import type { Course } from "../api/types";
+import { NaruLoading } from "../components/NaruLoading";
 import "leaflet/dist/leaflet.css";
 
 const TAG_LABEL: Record<string, string> = {
@@ -84,7 +85,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
     alert("신고가 접수됐어요.");
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: "center", color: "var(--g400)" }}>불러오는 중...</div>;
+  if (loading) return <NaruLoading message="코스를 불러오는 중!" />;
   if (!course) return <div style={{ padding: 40, textAlign: "center", color: "var(--g400)" }}>코스를 찾을 수 없어요.</div>;
 
   const photos = course.places.filter(p => p.photoUrl);

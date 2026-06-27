@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { api } from "../api/client";
-import type { Course, CourseTag, TAG_LABELS } from "../api/types";
+import type { Course, CourseTag } from "../api/types";
 import tteoniGuide from "../assets/mascot/tteoni-guide.png";
+import { NaruLoading } from "../components/NaruLoading";
 
 const TAGS: { key: CourseTag | "all"; label: string }[] = [
   { key: "all", label: "전체" },
@@ -54,7 +55,7 @@ export function ExploreTab({ onCourseDetail }: Props) {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: 40, color: "var(--g400)", fontSize: 14 }}>불러오는 중...</div>
+        <NaruLoading message="코스를 불러오는 중!" />
       ) : courses.length === 0 ? (
         <div style={{ textAlign: "center", padding: "40px 20px" }}>
           <img src={tteoniGuide} alt="" style={{ height: 100, opacity: 0.5, marginBottom: 12 }} />
