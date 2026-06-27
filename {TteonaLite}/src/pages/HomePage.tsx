@@ -53,16 +53,20 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
         radius: 8, fillColor: "#FF6B35", fillOpacity: 1, color: "#fff", weight: 3,
       }).addTo(map);
 
-      // 코스 마커 추가
+      // 코스 마커 추가 (나루 캐릭터)
+      const naruUrl = new URL("../assets/mascot/tteoni-wink.png", import.meta.url).href;
       for (const course of courses) {
         if (course.places.length === 0) continue;
         const first = course.places[0];
         const marker = L.marker([first.lat, first.lng], {
           icon: L.divIcon({
             className: "",
-            html: `<div style="width:36px;height:36px;border-radius:50%;background:var(--or);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,107,53,.4);color:#fff;font-size:12px;font-weight:700;">${course.places.length}</div>`,
-            iconSize: [36, 36],
-            iconAnchor: [18, 18],
+            html: `<div style="display:flex;flex-direction:column;align-items:center;">
+              <img src="${naruUrl}" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));" />
+              <div style="background:#fff;padding:1px 6px;border-radius:4px;margin-top:2px;font-size:9px;font-weight:600;color:#FF6B35;box-shadow:0 1px 3px rgba(0,0,0,.1);white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;">${course.title}</div>
+            </div>`,
+            iconSize: [40, 52],
+            iconAnchor: [20, 52],
           }),
         }).addTo(map);
         marker.on("click", () => onCourseDetail(course.id));

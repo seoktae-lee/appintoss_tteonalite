@@ -77,7 +77,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
 
   const loadCourses = async () => {
     try {
-      const res = await api.get<{ courses: Course[] }>("/api/courses/explore");
+      const res = await api.get<{ courses: Course[] }>("/api/courses/my");
       setCourses(res.courses);
     } catch {}
   };
