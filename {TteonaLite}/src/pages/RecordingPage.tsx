@@ -2,19 +2,21 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation } from "../hooks/useLocation";
 import { hapticTap, hapticImpact, hapticNotification } from "../hooks/useHaptic";
 import { uploadPhoto } from "../api/client";
+import { ConfirmDialog } from "@toss/tds-mobile";
 import type { TodaySession, Place, CourseTag } from "../api/types";
 import { NaruLoading } from "../components/NaruLoading";
 import "leaflet/dist/leaflet.css";
 
 interface Props {
   session: TodaySession;
+  referencePlaces?: Place[] | null;
   onAddPlace: (data: { lat: number; lng: number; memo?: string; photoUrl?: string }) => Promise<Place>;
   onRemovePlace: (placeId: string) => Promise<void>;
   onFinish: (data: { title?: string; tag?: string; isPublic?: boolean }) => Promise<any>;
   onBack: () => void;
 }
 
-export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, onBack }: Props) {
+export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePlace, onFinish, onBack }: Props) {
   const { location, getLocation } = useLocation();
   const [memo, setMemo] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -23,6 +25,8 @@ export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, on
   const [currentAddress, setCurrentAddress] = useState<string>("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showFinishSheet, setShowFinishSheet] = useState(false);
+  const [showGuide, setShowGuide] = useState(!!referencePlaces);
+  const [removePlaceId, setRemovePlaceId] = useState<string | null>(null);
   const [finishTag, setFinishTag] = useState<string>("etc");
   const [finishTitle, setFinishTitle] = useState("");
   const [isPublic, setIsPublic] = useState(false);
@@ -30,7 +34,40 @@ export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, on
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
 
+  const [nextDistance, setNextDistance] = useState<string | null>(null);
+  const [nextPlaceName, setNextPlaceName] = useState<string | null>(null);
+
+  function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function formatDistance(m: number): string {
+    return m < 1000 ? `${Math.round(m)}m` : `${(m / 1000).toFixed(1)}km`;
+  }
+
   useEffect(() => { getLocation(); }, [getLocation]);
+
+  useEffect(() => {
+    if (!location || !referencePlaces || referencePlaces.length === 0) {
+      setNextDistance(null);
+      setNextPlaceName(null);
+      return;
+    }
+    const nextIdx = session.places.length;
+    if (nextIdx >= referencePlaces.length) {
+      setNextDistance(null);
+      setNextPlaceName(null);
+      return;
+    }
+    const next = referencePlaces[nextIdx];
+    const dist = calcDistance(location.lat, location.lng, next.lat, next.lng);
+    setNextDistance(formatDistance(dist));
+    setNextPlaceName(next.placeName || next.address.split(" ").slice(-2).join(" "));
+  }, [location, session.places.length, referencePlaces]);
 
   useEffect(() => {
     if (!mapRef.current || !location) return;
@@ -41,10 +78,42 @@ export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, on
         .setView([location.lat, location.lng], 16);
       L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
 
+      // 내 위치
       L.circleMarker([location.lat, location.lng], {
         radius: 8, fillColor: "#FF6B35", fillOpacity: 1, color: "#fff", weight: 3,
       }).addTo(map);
 
+      // 참조 코스 경로 (점선 + 회색 마커)
+      if (referencePlaces && referencePlaces.length > 0) {
+        if (referencePlaces.length > 1) {
+          L.polyline(referencePlaces.map(p => [p.lat, p.lng]), {
+            color: "#AAAAAA", weight: 2.5, dashArray: "6,6", opacity: 0.5,
+          }).addTo(map);
+        }
+        referencePlaces.forEach((rp, i) => {
+          const visited = i < session.places.length;
+          const isNext = i === session.places.length;
+          L.marker([rp.lat, rp.lng], {
+            icon: L.divIcon({
+              className: "",
+              html: `<div style="width:${isNext ? 32 : 24}px;height:${isNext ? 32 : 24}px;border-radius:50%;background:${visited ? "#ccc" : isNext ? "#FF6B35" : "#999"};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${isNext ? 13 : 10}px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15);opacity:${visited ? 0.4 : 1};border:${isNext ? "3px solid #fff" : "none"};">${visited ? "✓" : i + 1}</div>`,
+              iconSize: [isNext ? 32 : 24, isNext ? 32 : 24],
+              iconAnchor: [isNext ? 16 : 12, isNext ? 16 : 12],
+            }),
+          }).addTo(map);
+        });
+
+        // 현재 위치 → 다음 장소 연결선
+        const nextIdx = session.places.length;
+        if (nextIdx < referencePlaces.length) {
+          const next = referencePlaces[nextIdx];
+          L.polyline([[location.lat, location.lng], [next.lat, next.lng]], {
+            color: "#FF6B35", weight: 2, dashArray: "4,8", opacity: 0.7,
+          }).addTo(map);
+        }
+      }
+
+      // 내가 기록한 장소 (오렌지 마커)
       session.places.forEach((p, i) => {
         L.marker([p.lat, p.lng], {
           icon: L.divIcon({
@@ -57,7 +126,7 @@ export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, on
 
       mapInstance.current = map;
     });
-  }, [location, session.places.length]);
+  }, [location, session.places.length, referencePlaces]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -153,8 +222,94 @@ export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, on
         </div>
       </div>
 
+      {/* 다음 장소 거리 안내 */}
+      {nextDistance && nextPlaceName && (
+        <div style={{
+          position: "absolute", top: 56, left: 16, right: 16, zIndex: 1000,
+          display: "flex", alignItems: "center", gap: 10,
+          background: "rgba(255,255,255,.95)", backdropFilter: "blur(8px)",
+          borderRadius: 12, padding: "10px 14px",
+          boxShadow: "0 2px 10px rgba(0,0,0,.08)",
+        }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", background: "var(--or-100)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" strokeWidth="2.5">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 12, color: "var(--g400)", margin: 0 }}>다음 장소</p>
+            <p style={{ fontSize: 14, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nextPlaceName}</p>
+          </div>
+          <div style={{
+            padding: "4px 10px", borderRadius: 8, background: "var(--or)",
+            color: "#fff", fontSize: 13, fontWeight: 700, flexShrink: 0,
+          }}>{nextDistance}</div>
+        </div>
+      )}
+
       {/* 지도 */}
       <div ref={mapRef} style={{ flex: 1 }} />
+
+      {/* 참조 코스 가이드 */}
+      {referencePlaces && referencePlaces.length > 0 && (
+        <div style={{ background: "#fff", borderTop: "1px solid var(--g100)" }}>
+          <button onClick={() => setShowGuide(!showGuide)} style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 16px", border: "none", background: "none", cursor: "pointer", fontFamily: "inherit",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" strokeWidth="2">
+                <path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4z" />
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--or-d)" }}>
+                코스 가이드 ({referencePlaces.length}곳)
+              </span>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--g400)" strokeWidth="2"
+              style={{ transform: showGuide ? "rotate(180deg)" : "none", transition: ".2s" }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {showGuide && (
+            <div style={{ padding: "0 16px 10px", display: "flex", gap: 8, overflowX: "auto" }}>
+              {referencePlaces.map((rp, i) => {
+                const visited = session.places.length > i;
+                return (
+                  <div key={rp.id} style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "6px 10px",
+                    background: visited ? "var(--or-100)" : "var(--g50)",
+                    border: `1px solid ${visited ? "var(--or)" : "var(--g200)"}`,
+                    borderRadius: 10, flexShrink: 0, minWidth: 0,
+                    opacity: visited ? 0.6 : 1,
+                  }}>
+                    <span style={{
+                      width: 20, height: 20, borderRadius: "50%",
+                      background: visited ? "var(--or)" : "var(--g300)",
+                      color: "#fff", fontSize: 10, fontWeight: 700, flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>{visited ? "✓" : i + 1}</span>
+                    {rp.photoUrl && (
+                      <img src={rp.photoUrl} alt="" style={{
+                        width: 28, height: 28, borderRadius: 6, objectFit: "cover", flexShrink: 0,
+                      }} />
+                    )}
+                    <span style={{
+                      fontSize: 11, color: visited ? "var(--g400)" : "var(--g700)", fontWeight: 500,
+                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 80,
+                      textDecoration: visited ? "line-through" : "none",
+                    }}>
+                      {rp.placeName || rp.address.split(" ").slice(-2).join(" ")}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 장소 칩 */}
       {session.places.length > 0 && (
@@ -172,7 +327,7 @@ export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, on
                   justifyContent: "center", fontWeight: 700,
                 }}>{i + 1}</span>
                 {p.placeName || p.address.split(" ").slice(-2).join(" ")}
-                <button onClick={() => { hapticTap(); onRemovePlace(p.id); }} style={{
+                <button onClick={() => { hapticTap(); setRemovePlaceId(p.id); }} style={{
                   width: 18, height: 18, borderRadius: "50%", background: "var(--g300)",
                   border: "none", cursor: "pointer", display: "flex", alignItems: "center",
                   justifyContent: "center", fontSize: 10, color: "#fff", flexShrink: 0,
@@ -387,6 +542,23 @@ export function RecordingPage({ session, onAddPlace, onRemovePlace, onFinish, on
           </div>
         </div>
       )}
+
+      {/* 장소 삭제 확인 */}
+      <ConfirmDialog
+        isOpen={!!removePlaceId}
+        title="이 장소를 삭제할까요?"
+        description="삭제하면 되돌릴 수 없어요."
+        confirmText="삭제"
+        cancelText="취소"
+        onConfirm={() => {
+          if (removePlaceId) {
+            onRemovePlace(removePlaceId);
+            hapticNotification();
+          }
+          setRemovePlaceId(null);
+        }}
+        onCancel={() => setRemovePlaceId(null)}
+      />
     </div>
   );
 }

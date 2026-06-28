@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ConfirmDialog } from "@toss/tds-mobile";
 import { api } from "../api/client";
 import type { Course } from "../api/types";
@@ -8,6 +8,73 @@ import "leaflet/dist/leaflet.css";
 const TAG_LABEL: Record<string, string> = {
   date: "데이트", travel: "여행", food: "맛집탐방", cafe: "카페투어", walk: "산책", etc: "기타",
 };
+
+function PhotoSwiper({ photos, photoIndex, onIndexChange }: {
+  photos: { photoUrl: string | null }[];
+  photoIndex: number;
+  onIndexChange: (i: number) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isUserScroll = useRef(true);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || !isUserScroll.current) return;
+    const idx = Math.round(el.scrollLeft / el.clientWidth);
+    if (idx !== photoIndex && idx >= 0 && idx < photos.length) {
+      onIndexChange(idx);
+    }
+  }, [photoIndex, photos.length, onIndexChange]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    isUserScroll.current = false;
+    el.scrollTo({ left: photoIndex * el.clientWidth, behavior: "smooth" });
+    const timer = setTimeout(() => { isUserScroll.current = true; }, 300);
+    return () => clearTimeout(timer);
+  }, [photoIndex]);
+
+  return (
+    <div style={{ padding: "0 20px", marginBottom: 8 }}>
+      <style>{`.photo-swiper::-webkit-scrollbar{display:none}`}</style>
+      <div
+        ref={scrollRef}
+        className="photo-swiper"
+        onScroll={handleScroll}
+        style={{
+          display: "flex", overflowX: "auto", scrollSnapType: "x mandatory",
+          borderRadius: 16, WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none", msOverflowStyle: "none",
+        }}
+      >
+        {photos.map((p, i) => (
+          <img
+            key={i}
+            src={p.photoUrl || ""}
+            alt=""
+            style={{
+              width: "100%", height: 200, objectFit: "cover", flexShrink: 0,
+              scrollSnapAlign: "start",
+            }}
+          />
+        ))}
+      </div>
+      {photos.length > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 8 }}>
+          {photos.map((_, i) => (
+            <div key={i} onClick={() => onIndexChange(i)} style={{
+              width: i === photoIndex ? 16 : 8, height: 8,
+              borderRadius: i === photoIndex ? 4 : 50,
+              background: i === photoIndex ? "var(--or)" : "var(--g300)",
+              cursor: "pointer", transition: ".2s",
+            }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   courseId: string;
@@ -128,21 +195,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
 
       {/* 사진 스와이프 */}
       {photos.length > 0 && (
-        <div style={{ padding: "0 20px" }}>
-          <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 8 }}>
-            <img src={photos[photoIndex]?.photoUrl || ""} alt="" style={{ width: "100%", height: 200, objectFit: "cover" }} />
-          </div>
-          {photos.length > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 12 }}>
-              {photos.map((_, i) => (
-                <div key={i} onClick={() => setPhotoIndex(i)} style={{
-                  width: i === photoIndex ? 8 : 8, height: 8, borderRadius: "50%",
-                  background: i === photoIndex ? "var(--or)" : "var(--g300)", cursor: "pointer",
-                }} />
-              ))}
-            </div>
-          )}
-        </div>
+        <PhotoSwiper photos={photos} photoIndex={photoIndex} onIndexChange={setPhotoIndex} />
       )}
 
       {/* 태그 + 좋아요 */}

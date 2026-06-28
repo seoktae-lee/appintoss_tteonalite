@@ -1,14 +1,14 @@
 import { defineConfig } from "@apps-in-toss/web-framework/config";
 
 export default defineConfig({
-  appName: "tteonalite", // AIT 콘솔 등록 후 실제 appName으로 변경
+  appName: "tteonalite",
   brand: {
     displayName: "떠나라이트",
     primaryColor: "#FF6B35",
-    icon: "", // AIT 콘솔 등록 후 아이콘 URL 추가
+    icon: "https://static.toss.im/appsintoss/43107/5c89de61-5a5b-4c58-93b7-043ba37f0e3f.png",
   },
   web: {
-    host: "172.30.1.38",
+    host: "0.0.0.0",
     port: 5175,
     commands: {
       dev: "vite --host",

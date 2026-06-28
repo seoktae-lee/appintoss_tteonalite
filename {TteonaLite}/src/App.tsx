@@ -6,14 +6,17 @@ import { HomePage } from "./pages/HomePage";
 import { RecordingPage } from "./pages/RecordingPage";
 import { ExploreTab } from "./pages/ExploreTab";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
+import { CourseEditPage } from "./pages/CourseEditPage";
 import { ArchivePage } from "./pages/ArchivePage";
 import { BottomTabBar } from "./components/BottomTabBar";
 import { NaruLoading } from "./components/NaruLoading";
 import { useTodaySession } from "./hooks/useTodaySession";
 import { clearAuth, api } from "./api/client";
-import type { User, AppTab, LoginResponse, Course } from "./api/types";
+import { playInterstitialAd } from "./hooks/useAds";
+import { BannerAdSlot } from "./components/BannerAdSlot";
+import type { User, AppTab, LoginResponse, Course, Place } from "./api/types";
 
-type SubPage = "tabs" | "recording" | "course-detail" | "archive" | "resume-sheet";
+type SubPage = "tabs" | "recording" | "course-detail" | "course-edit" | "archive" | "resume-sheet";
 
 function App() {
   const [onboardingSeen, setOnboardingSeen] = useState(
@@ -73,6 +76,8 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
   const { session, startSession, addPlace, removePlace, finishSession, checkActive, discardSession } = useTodaySession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [referencePlaces, setReferencePlaces] = useState<Place[] | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const loadCourses = async () => {
@@ -108,6 +113,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
 
   const handleFinishRecording = async (data: { title?: string; tag?: string; isPublic?: boolean }) => {
     await finishSession(data);
+    playInterstitialAd("ait-ad-test-interstitial-id");
     setSubPage("tabs");
     loadCourses();
   };
@@ -125,10 +131,15 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
     return (
       <RecordingPage
         session={session}
+        referencePlaces={referencePlaces}
         onAddPlace={addPlace}
         onRemovePlace={removePlace}
-        onFinish={handleFinishRecording}
-        onBack={() => setSubPage("tabs")}
+        onFinish={(data) => {
+          setReferencePlaces(null);
+          setSelectedCourse(null);
+          return handleFinishRecording(data);
+        }}
+        onBack={() => { setSubPage("tabs"); setReferencePlaces(null); setSelectedCourse(null); }}
       />
     );
   }
@@ -212,15 +223,45 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
     );
   }
 
+  // 코스 편집 (이 코스로 떠나기)
+  if (subPage === "course-edit" && selectedCourse) {
+    return (
+      <CourseEditPage
+        course={selectedCourse}
+        onBack={() => setSubPage("course-detail")}
+        onStart={async (places) => {
+          setReferencePlaces(places);
+          if (session && session.places.length > 0) {
+            setSubPage("recording");
+            return;
+          }
+          if (session && session.places.length === 0) {
+            await discardSession();
+          }
+          setIsTransitioning(true);
+          try {
+            await startSession();
+            await new Promise(r => setTimeout(r, 100));
+            setSubPage("recording");
+          } catch {
+            setSubPage("tabs");
+          } finally {
+            setIsTransitioning(false);
+          }
+        }}
+      />
+    );
+  }
+
   // 코스 상세
   if (subPage === "course-detail" && selectedCourseId) {
     return (
       <CourseDetailPage
         courseId={selectedCourseId}
-        onBack={() => setSubPage("tabs")}
+        onBack={() => { setSubPage("tabs"); setSelectedCourse(null); }}
         onStartCourseNav={(course) => {
-          // 이 코스로 떠나기 (기록 모드 시작)
-          handleStartRecording();
+          setSelectedCourse(course);
+          setSubPage("course-edit");
         }}
       />
     );
@@ -267,6 +308,11 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g300)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
           </div>
+          {/* 배너 광고 */}
+          <div style={{ marginTop: 16 }}>
+            <BannerAdSlot adGroupId="ait-ad-test-banner-id" />
+          </div>
+
           <button onClick={onLogout} style={{
             width: "100%", marginTop: 32, padding: 12, border: "none", background: "none",
             color: "var(--g400)", fontSize: 13, cursor: "pointer", textDecoration: "underline",

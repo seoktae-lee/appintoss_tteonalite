@@ -1,11 +1,16 @@
 import { Router, Request, Response } from "express";
 import { db, randomUUID } from "../db";
 import { signToken, authMiddleware, AuthRequest } from "../middleware/auth";
+import { getTossUserKey } from "../services/tossLogin";
 
 const router = Router();
 
 router.post("/login", (req: Request, res: Response): void => {
-  const { anonymousKey } = req.body as { anonymousKey: string };
+  const { anonymousKey, authorizationCode, referrer } = req.body as {
+    anonymousKey: string;
+    authorizationCode?: string;
+    referrer?: string;
+  };
   if (!anonymousKey) { res.status(400).json({ error: "anonymousKey가 필요해요." }); return; }
 
   try {
@@ -20,6 +25,18 @@ router.post("/login", (req: Request, res: Response): void => {
       };
       db.createUser(user);
     }
+
+    if (authorizationCode && referrer && !user.tossUserKey) {
+      getTossUserKey(authorizationCode, referrer)
+        .then((tossUserKey) => {
+          if (tossUserKey) {
+            db.setTossUserKey(user!.id, tossUserKey);
+            console.log(`[AUTH] tossUserKey 저장: userId=${user!.id}, tossUserKey=${tossUserKey}`);
+          }
+        })
+        .catch(() => {});
+    }
+
     const token = signToken(user.id);
     res.json({ token, user: { id: user.id, nickname: user.nickname } });
   } catch (error) {
@@ -41,20 +58,21 @@ router.delete("/me", authMiddleware, (req: AuthRequest, res: Response): void => 
   res.json({ ok: true });
 });
 
-router.post("/unlink", (req: Request, res: Response): void => {
-  const { userKey } = req.body as { userKey?: number };
-  if (userKey) {
-    const data = require("fs").readFileSync(
-      require("path").join(process.env.DATA_DIR ?? require("path").join(__dirname, "..", "..", "data"), "tteonalite-db.json"), "utf-8"
-    );
-    const parsed = JSON.parse(data) as { users: Array<{ id: string; tossUserKey: number | null }> };
-    const user = parsed.users.find(u => u.tossUserKey === userKey);
+function unlinkHandler(req: Request, res: Response): void {
+  const userKey = Number(req.body?.userKey ?? req.query?.userKey) || 0;
+  if (!userKey) { res.json({ ok: true }); return; }
+
+  try {
+    const user = db.findUserByTossKey(userKey);
     if (user) {
       db.deleteUser(user.id);
       console.log(`[Unlink] 유저 데이터 삭제: tossUserKey=${userKey}`);
     }
-  }
+  } catch {}
   res.json({ ok: true });
-});
+}
+
+router.get("/unlink", unlinkHandler);
+router.post("/unlink", unlinkHandler);
 
 export default router;

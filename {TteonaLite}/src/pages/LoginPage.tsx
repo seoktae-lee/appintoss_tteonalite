@@ -30,9 +30,22 @@ export function LoginPage({ onLoginSuccess }: Props) {
         if (!keyResult || keyResult === "ERROR") throw new Error("유저 식별키를 가져올 수 없어요.");
         anonymousKey = typeof keyResult === "object" && "hash" in keyResult ? keyResult.hash : String(keyResult);
       }
-      const response = await api.post<LoginResponse>("/api/auth/login", { anonymousKey });
+      let authorizationCode: string | undefined;
+      let referrer: string | undefined;
+      if (!DEV_BYPASS) {
+        try {
+          const loginResult = await appLogin();
+          if (loginResult && typeof loginResult === "object") {
+            authorizationCode = (loginResult as { authorizationCode?: string }).authorizationCode;
+            referrer = (loginResult as { referrer?: string }).referrer;
+          }
+        } catch {}
+      }
+      const response = await api.post<LoginResponse>("/api/auth/login", {
+        anonymousKey,
+        ...(authorizationCode ? { authorizationCode, referrer } : {}),
+      });
       saveAuth(response.token);
-      if (!DEV_BYPASS) { try { await appLogin(); } catch {} }
       onLoginSuccess(response.user);
     } catch (error) {
       setErrorMsg(error instanceof Error ? error.message : String(error));

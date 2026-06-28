@@ -76,6 +76,10 @@ export const db = {
     return load().users.find(u => u.anonymousKey === anonymousKey);
   },
 
+  findUserByTossKey(tossUserKey: number): UserRecord | undefined {
+    return load().users.find(u => u.tossUserKey === tossUserKey);
+  },
+
   findUserById(id: string): UserRecord | undefined {
     return load().users.find(u => u.id === id);
   },

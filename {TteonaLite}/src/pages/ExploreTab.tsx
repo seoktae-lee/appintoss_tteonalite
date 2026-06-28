@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import type { Course, CourseTag } from "../api/types";
 import tteoniGuide from "../assets/mascot/tteoni-guide.png";
 import { NaruLoading } from "../components/NaruLoading";
+import { BannerAdSlot } from "../components/BannerAdSlot";
 
 const TAGS: { key: CourseTag | "all"; label: string }[] = [
   { key: "all", label: "전체" },
@@ -91,6 +92,11 @@ export function ExploreTab({ onCourseDetail }: Props) {
           })}
         </div>
       )}
+
+      {/* 배너 광고 */}
+      <div style={{ margin: "16px 20px" }}>
+        <BannerAdSlot adGroupId="ait-ad-test-banner-id" />
+      </div>
 
       {/* 본앱 유도 */}
       <div style={{
