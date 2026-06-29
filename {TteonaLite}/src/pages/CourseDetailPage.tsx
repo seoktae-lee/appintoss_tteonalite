@@ -86,6 +86,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReport, setShowReport] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -152,6 +153,12 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
     alert("신고가 접수됐어요.");
   };
 
+  const handleDelete = async () => {
+    await api.delete(`/api/courses/${courseId}`);
+    setShowDelete(false);
+    onBack();
+  };
+
   if (loading) return <NaruLoading message="코스를 불러오는 중!" />;
   if (!course) return <div style={{ padding: 40, textAlign: "center", color: "var(--g400)" }}>코스를 찾을 수 없어요.</div>;
 
@@ -178,7 +185,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
             </svg>
           </button>
-          <button onClick={() => setShowReport(true)} style={{ width: 36, height: 36, border: "none", background: "none", cursor: "pointer" }}>
+          <button onClick={() => course?.isMine ? setShowDelete(true) : setShowReport(true)} style={{ width: 36, height: 36, border: "none", background: "none", cursor: "pointer" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--g700)" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
           </button>
         </div>
@@ -280,6 +287,17 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
         cancelText="취소"
         onConfirm={handleReport}
         onCancel={() => setShowReport(false)}
+      />
+
+      {/* 삭제 다이얼로그 */}
+      <ConfirmDialog
+        isOpen={showDelete}
+        title="이 코스를 삭제할까요?"
+        description="삭제하면 되돌릴 수 없어요."
+        confirmText="삭제"
+        cancelText="취소"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDelete(false)}
       />
     </div>
   );

@@ -30,6 +30,7 @@ export interface CourseRecord {
   title: string;
   tag: "date" | "travel" | "food" | "cafe" | "walk" | "etc";
   isPublic: boolean;
+  isAnonymous: boolean;
   places: PlaceRecord[];
   likes: string[];
   bookmarks: string[];

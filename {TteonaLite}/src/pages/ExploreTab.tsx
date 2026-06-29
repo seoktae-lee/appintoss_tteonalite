@@ -95,7 +95,7 @@ export function ExploreTab({ onCourseDetail }: Props) {
 
       {/* 배너 광고 */}
       <div style={{ margin: "16px 20px" }}>
-        <BannerAdSlot adGroupId="ait-ad-test-banner-id" />
+        <BannerAdSlot adGroupId="ait.v2.live.cfbd9ede35f94c00" />
       </div>
 
       {/* 본앱 유도 */}

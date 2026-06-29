@@ -113,7 +113,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
 
   const handleFinishRecording = async (data: { title?: string; tag?: string; isPublic?: boolean }) => {
     await finishSession(data);
-    playInterstitialAd("ait-ad-test-interstitial-id");
+    playInterstitialAd("ait.v2.live.ae7c8fd603884676");
     setSubPage("tabs");
     loadCourses();
   };
@@ -310,7 +310,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
           </div>
           {/* 배너 광고 */}
           <div style={{ marginTop: 16 }}>
-            <BannerAdSlot adGroupId="ait-ad-test-banner-id" />
+            <BannerAdSlot adGroupId="ait.v2.live.da16d81ccaae48b3" />
           </div>
 
           <button onClick={onLogout} style={{

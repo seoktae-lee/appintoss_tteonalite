@@ -74,7 +74,7 @@ router.post("/today/finish", (req: AuthRequest, res: Response): void => {
   const session = db.getActiveSession(req.userId!);
   if (!session) { res.status(400).json({ error: "기록 중인 세션이 없어요." }); return; }
 
-  const { title, tag, isPublic } = req.body as { title?: string; tag?: string; isPublic?: boolean };
+  const { title, tag, isPublic, isAnonymous } = req.body as { title?: string; tag?: string; isPublic?: boolean; isAnonymous?: boolean };
 
   const finished = db.finishSession(session.id);
   if (!finished || finished.places.length === 0) {
@@ -91,6 +91,7 @@ router.post("/today/finish", (req: AuthRequest, res: Response): void => {
     title: title || defaultTitle,
     tag: (tag as CourseRecord["tag"]) || "etc",
     isPublic: isPublic ?? false,
+    isAnonymous: isAnonymous ?? false,
     places: finished.places,
     likes: [],
     bookmarks: [],
@@ -124,7 +125,7 @@ router.get("/search", (req: AuthRequest, res: Response): void => {
   }).slice(0, 20);
   const enriched = results.map(c => ({
     ...c,
-    authorNickname: db.findUserById(c.userId)?.nickname || "익명",
+    authorNickname: c.isAnonymous ? "익명" : (db.findUserById(c.userId)?.nickname || "익명"),
     isLiked: c.likes.includes(req.userId!),
     isBookmarked: c.bookmarks.includes(req.userId!),
     likeCount: c.likes.length,
@@ -138,7 +139,7 @@ router.get("/explore", (req: AuthRequest, res: Response): void => {
   const user = db.findUserById(req.userId!);
   const enriched = courses.map(c => ({
     ...c,
-    authorNickname: db.findUserById(c.userId)?.nickname || "익명",
+    authorNickname: c.isAnonymous ? "익명" : (db.findUserById(c.userId)?.nickname || "익명"),
     isLiked: c.likes.includes(req.userId!),
     isBookmarked: c.bookmarks.includes(req.userId!),
     likeCount: c.likes.length,
@@ -153,7 +154,7 @@ router.get("/:id", (req: AuthRequest, res: Response): void => {
   res.json({
     course: {
       ...course,
-      authorNickname: author?.nickname || "익명",
+      authorNickname: course.isAnonymous ? "익명" : (author?.nickname || "익명"),
       isLiked: course.likes.includes(req.userId!),
       isBookmarked: course.bookmarks.includes(req.userId!),
       likeCount: course.likes.length,

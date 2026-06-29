@@ -10,9 +10,9 @@ import "leaflet/dist/leaflet.css";
 interface Props {
   session: TodaySession;
   referencePlaces?: Place[] | null;
-  onAddPlace: (data: { lat: number; lng: number; memo?: string; photoUrl?: string }) => Promise<Place>;
+  onAddPlace: (data: { lat: number; lng: number; memo?: string; photoUrl?: string; placeName?: string }) => Promise<Place>;
   onRemovePlace: (placeId: string) => Promise<void>;
-  onFinish: (data: { title?: string; tag?: string; isPublic?: boolean }) => Promise<any>;
+  onFinish: (data: { title?: string; tag?: string; isPublic?: boolean; isAnonymous?: boolean }) => Promise<any>;
   onBack: () => void;
 }
 
@@ -22,7 +22,9 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
   const [isUploading, setIsUploading] = useState(false);
   const [showMemo, setShowMemo] = useState(false);
   const [showLocationConfirm, setShowLocationConfirm] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<string>("");
+  const [customPlaceName, setCustomPlaceName] = useState<string>("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showFinishSheet, setShowFinishSheet] = useState(false);
   const [showGuide, setShowGuide] = useState(!!referencePlaces);
@@ -30,6 +32,7 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
   const [finishTag, setFinishTag] = useState<string>("etc");
   const [finishTitle, setFinishTitle] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -140,7 +143,7 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
     setIsUploading(true);
     try {
       const photoUrl = await uploadPhoto(pendingFile);
-      await onAddPlace({ lat: location.lat, lng: location.lng, memo: memo || undefined, photoUrl });
+      await onAddPlace({ lat: location.lat, lng: location.lng, memo: memo || undefined, photoUrl, ...(customPlaceName.trim() ? { placeName: customPlaceName.trim() } : {}) });
       hapticNotification();
       setMemo("");
       setPendingFile(null);
@@ -153,19 +156,24 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
   };
 
   const handleTakePhoto = async () => {
-    // GPS 위치 새로고침 후 주소 표시
-    getLocation();
-    if (location) {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${location.lat}&lon=${location.lng}&format=json&accept-language=ko&zoom=18`, {
-          headers: { "User-Agent": "TteonaLite/1.0" }
-        });
-        const data = await res.json();
-        const addr = data.address;
-        setCurrentAddress(addr?.road ? `${addr.city || addr.county || ""} ${addr.road}` : data.display_name?.split(",").slice(0, 2).join(" ") || "현재 위치");
-      } catch {
-        setCurrentAddress("현재 위치");
+    setIsFetchingLocation(true);
+    setCustomPlaceName("");
+    try {
+      await getLocation();
+      if (location) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${location.lat}&lon=${location.lng}&format=json&accept-language=ko&zoom=18`, {
+            headers: { "User-Agent": "TteonaLite/1.0" }
+          });
+          const data = await res.json();
+          const addr = data.address;
+          setCurrentAddress(addr?.road ? `${addr.city || addr.county || ""} ${addr.road}` : data.display_name?.split(",").slice(0, 2).join(" ") || "현재 위치");
+        } catch {
+          setCurrentAddress("현재 위치");
+        }
       }
+    } finally {
+      setIsFetchingLocation(false);
     }
     setShowLocationConfirm(true);
   };
@@ -180,7 +188,7 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
 
   const handleFinish = async () => {
     try {
-      await onFinish({ title: finishTitle || undefined, tag: finishTag, isPublic });
+      await onFinish({ title: finishTitle || undefined, tag: finishTag, isPublic, isAnonymous });
       setShowFinishSheet(false);
     } catch (err) {
       alert("저장 실패: " + (err instanceof Error ? err.message : ""));
@@ -192,6 +200,7 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
     <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} style={{ display: "none" }} />
   );
 
+  if (isFetchingLocation) return <NaruLoading message="위치를 찾고 있어!" />;
   if (isUploading) return <NaruLoading message="장소를 저장하는 중!" />;
   if (!location) return <NaruLoading message="위치를 찾고 있어!" />;
 
@@ -354,7 +363,7 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
             <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>여기서 촬영할까요?</h3>
             <div style={{
               display: "flex", alignItems: "center", gap: 10, padding: 14,
-              background: "var(--g50)", borderRadius: 12, marginBottom: 16,
+              background: "var(--g50)", borderRadius: 12, marginBottom: 12,
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <div style={{ flex: 1 }}>
@@ -364,8 +373,18 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
                 </p>
               </div>
             </div>
+            <input
+              value={customPlaceName}
+              onChange={e => setCustomPlaceName(e.target.value)}
+              placeholder="장소명 직접 입력 (선택)"
+              style={{
+                width: "100%", padding: "12px 14px", borderRadius: 12,
+                border: "1.5px solid var(--g200)", fontSize: 14, outline: "none",
+                fontFamily: "inherit", marginBottom: 16,
+              }}
+            />
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setShowLocationConfirm(false)} style={{
+              <button onClick={() => { setShowLocationConfirm(false); setCustomPlaceName(""); }} style={{
                 flex: 1, padding: 14, borderRadius: 100, border: "1.5px solid var(--g200)",
                 background: "#fff", color: "var(--g500)", fontSize: 15, fontWeight: 600,
                 cursor: "pointer", fontFamily: "inherit",
@@ -521,6 +540,25 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
                 background: isPublic ? "var(--or)" : "var(--g300)", padding: 2,
                 display: "flex", alignItems: isPublic ? "center" : "center",
                 justifyContent: isPublic ? "flex-end" : "flex-start", transition: ".2s",
+              }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
+              </button>
+            </div>
+
+            {/* 익명 설정 */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 0", borderTop: "1px solid var(--g100)",
+            }}>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>익명으로 등록</p>
+                <p style={{ fontSize: 12, color: "var(--g400)", margin: "2px 0 0" }}>별명 대신 '익명'으로 표시돼요</p>
+              </div>
+              <button onClick={() => setIsAnonymous(!isAnonymous)} style={{
+                width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer",
+                background: isAnonymous ? "var(--or)" : "var(--g300)", padding: 2,
+                display: "flex", alignItems: "center",
+                justifyContent: isAnonymous ? "flex-end" : "flex-start", transition: ".2s",
               }}>
                 <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
               </button>

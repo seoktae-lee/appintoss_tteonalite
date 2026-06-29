@@ -15,6 +15,8 @@ app.use(express.json());
 
 // 사진 업로드용 static
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, "..", "uploads");
+import fs from "fs";
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 app.use("/uploads", express.static(UPLOAD_DIR));
 
 app.use("/api/auth", authRouter);
