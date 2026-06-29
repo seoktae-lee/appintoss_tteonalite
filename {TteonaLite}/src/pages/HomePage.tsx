@@ -91,27 +91,54 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
         {!location && <NaruLoading message="위치를 가져오는 중!" />}
       </div>
 
-      {/* 검색바 (플로팅) */}
+      {/* 상단 바 (날씨 + 검색) */}
       <div style={{ position: "absolute", top: 12, left: 16, right: 16, zIndex: 1000 }}>
         <div style={{
-          display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,.95)",
-          backdropFilter: "blur(8px)", borderRadius: 14, padding: "6px 14px",
+          display: "flex", alignItems: "center", gap: 10,
+          background: "rgba(255,255,255,.95)", backdropFilter: "blur(10px)",
+          borderRadius: 16, padding: "8px 12px",
           boxShadow: "0 2px 12px rgba(0,0,0,.08)",
         }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--g400)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input
-            value={searchQuery}
-            onChange={e => handleSearch(e.target.value)}
-            onFocus={() => setShowSearch(true)}
-            placeholder="코스명, 지역 검색"
-            style={{ flex: 1, border: "none", outline: "none", fontSize: 16, background: "transparent", fontFamily: "inherit", padding: "6px 0" }}
-          />
-          {searchQuery && (
-            <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowSearch(false); }} style={{
-              background: "var(--g300)", border: "none", borderRadius: "50%", width: 20, height: 20,
-              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 10, color: "#fff",
-            }}>✕</button>
+          {/* 나루 + 날씨 (좌측) */}
+          {weather ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10, background: "var(--or-100, #FFF0E6)",
+                display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+              }}>
+                <img src={tteoniWink} alt="" style={{ width: 36, height: 36, objectFit: "contain" }} />
+              </div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--g900)", margin: 0, whiteSpace: "nowrap" }}>
+                  {weather.city} {weather.temperature}° {weatherIcon}
+                </p>
+                <p style={{ fontSize: 10, color: "var(--g500)", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 120 }}>
+                  {weather.comment}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--g400)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           )}
+          {/* 구분선 */}
+          {weather && <div style={{ width: 1, height: 28, background: "var(--g200)", flexShrink: 0 }} />}
+          {/* 검색 (우측) */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6 }}>
+            {weather && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g400)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+            <input
+              value={searchQuery}
+              onChange={e => handleSearch(e.target.value)}
+              onFocus={() => setShowSearch(true)}
+              placeholder="코스 검색"
+              style={{ flex: 1, border: "none", outline: "none", fontSize: 14, background: "transparent", fontFamily: "inherit", padding: "4px 0", minWidth: 0 }}
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowSearch(false); }} style={{
+                background: "var(--g300)", border: "none", borderRadius: "50%", width: 20, height: 20,
+                display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 10, color: "#fff", flexShrink: 0,
+              }}>✕</button>
+            )}
+          </div>
         </div>
         {/* 검색 결과 드롭다운 */}
         {showSearch && searchResults.length > 0 && (
@@ -138,36 +165,6 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
           </div>
         )}
       </div>
-
-      {/* 날씨 위젯 */}
-      {weather && (
-        <div style={{
-          position: "absolute", top: 62, left: 16, right: 16, zIndex: 1000,
-        }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 10,
-            background: "rgba(255,255,255,.94)", backdropFilter: "blur(10px)",
-            borderRadius: 16, padding: "10px 16px 10px 10px",
-            boxShadow: "0 2px 12px rgba(0,0,0,.06)",
-          }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 12, background: "var(--or-100, #FFF0E6)",
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              overflow: "hidden",
-            }}>
-              <img src={tteoniWink} alt="" style={{ width: 40, height: 40, objectFit: "contain" }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--g900)", margin: 0 }}>
-                {weather.city} {weather.temperature}° {weatherIcon}
-              </p>
-              <p style={{ fontSize: 12, color: "var(--g500)", margin: "2px 0 0" }}>
-                {weather.comment}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 내 위치 버튼 (우하단) */}
       <button onClick={getLocation} style={{

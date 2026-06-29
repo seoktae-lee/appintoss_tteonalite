@@ -277,19 +277,30 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
       {showHomeTip && tab === "home" && (
         <div style={{
           position: "fixed", top: 56, left: 16, right: 16, zIndex: 9999,
-          display: "flex", alignItems: "center", gap: 10,
-          background: "rgba(40,40,40,.92)", backdropFilter: "blur(8px)",
-          borderRadius: 14, padding: "12px 14px",
-          boxShadow: "0 4px 16px rgba(0,0,0,.15)",
+          display: "flex", alignItems: "center", gap: 14,
+          background: "rgba(40,40,40,.94)", backdropFilter: "blur(10px)",
+          borderRadius: 18, padding: "18px 18px",
+          boxShadow: "0 4px 20px rgba(0,0,0,.2)",
           animation: "fadeIn .3s ease-out",
         }}>
-          <span style={{ fontSize: 20 }}>💡</span>
-          <p style={{ flex: 1, fontSize: 13, color: "#fff", lineHeight: 1.4, margin: 0 }}>
-            우측 상단 <b>···</b> → <b>홈 화면에 추가</b>하면<br/>더 빠르게 접근할 수 있어!
-          </p>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,.12)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <span style={{ fontSize: 24 }}>💡</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: "0 0 4px", lineHeight: 1.3 }}>
+              홈 화면에 추가해봐!
+            </p>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,.7)", margin: 0, lineHeight: 1.4 }}>
+              우측 상단 <b style={{ color: "#fff" }}>···</b> → <b style={{ color: "#fff" }}>홈 화면에 추가</b>
+            </p>
+          </div>
           <button onClick={() => { setShowHomeTip(false); localStorage.setItem("tteona_home_tip_seen", "1"); }} style={{
-            background: "none", border: "none", color: "var(--or)", fontSize: 13,
+            background: "var(--or)", border: "none", color: "#fff", fontSize: 13,
             fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
+            padding: "8px 14px", borderRadius: 10,
           }}>확인</button>
         </div>
       )}
