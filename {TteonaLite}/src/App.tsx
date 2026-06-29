@@ -116,7 +116,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
 
   const handleFinishRecording = async (data: { title?: string; tag?: string; isPublic?: boolean }) => {
     await finishSession(data);
-    playInterstitialAd("ait.v2.live.ae7c8fd603884676");
+    await playInterstitialAd("ait.v2.live.ae7c8fd603884676");
     setSubPage("tabs");
     loadCourses();
   };
