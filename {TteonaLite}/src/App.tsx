@@ -82,6 +82,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
   const [referencePlaces, setReferencePlaces] = useState<Place[] | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showHomeTip, setShowHomeTip] = useState(() => !localStorage.getItem("tteona_home_tip_seen"));
 
   const loadCourses = async () => {
     try {
@@ -272,6 +273,27 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
 
   return (<>
     <div style={{ minHeight: "100vh" }}>
+      {/* 홈 화면 추가 안내 토스트 */}
+      {showHomeTip && tab === "home" && (
+        <div style={{
+          position: "fixed", top: 56, left: 16, right: 16, zIndex: 9999,
+          display: "flex", alignItems: "center", gap: 10,
+          background: "rgba(40,40,40,.92)", backdropFilter: "blur(8px)",
+          borderRadius: 14, padding: "12px 14px",
+          boxShadow: "0 4px 16px rgba(0,0,0,.15)",
+          animation: "fadeIn .3s ease-out",
+        }}>
+          <span style={{ fontSize: 20 }}>💡</span>
+          <p style={{ flex: 1, fontSize: 13, color: "#fff", lineHeight: 1.4, margin: 0 }}>
+            우측 상단 <b>···</b> → <b>홈 화면에 추가</b>하면<br/>더 빠르게 접근할 수 있어!
+          </p>
+          <button onClick={() => { setShowHomeTip(false); localStorage.setItem("tteona_home_tip_seen", "1"); }} style={{
+            background: "none", border: "none", color: "var(--or)", fontSize: 13,
+            fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
+          }}>확인</button>
+        </div>
+      )}
+
       {tab === "home" && (
         <HomePage
           nickname={user.nickname || ""}

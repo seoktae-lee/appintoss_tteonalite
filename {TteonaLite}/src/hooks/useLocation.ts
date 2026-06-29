@@ -2,14 +2,27 @@ import { useState, useCallback } from "react";
 import { getCurrentLocation, Accuracy, GetCurrentLocationPermissionError } from "@apps-in-toss/web-framework";
 
 const DEV_BYPASS = import.meta.env.VITE_DEV_BYPASS_AIT === "true";
+const CACHE_KEY = "tteona_last_location";
 
 interface Location {
   lat: number;
   lng: number;
 }
 
+function getCachedLocation(): Location | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) return JSON.parse(cached) as Location;
+  } catch {}
+  return null;
+}
+
+function cacheLocation(loc: Location) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(loc)); } catch {}
+}
+
 export function useLocation() {
-  const [location, setLocation] = useState<Location | null>(null);
+  const [location, setLocation] = useState<Location | null>(getCachedLocation);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +37,9 @@ export function useLocation() {
       }
 
       const result = await getCurrentLocation({ accuracy: Accuracy.High });
-      setLocation({ lat: result.coords.latitude, lng: result.coords.longitude });
+      const loc = { lat: result.coords.latitude, lng: result.coords.longitude };
+      setLocation(loc);
+      cacheLocation(loc);
     } catch (err) {
       if (err instanceof GetCurrentLocationPermissionError) {
         setError("위치 권한을 허용해주세요.");
