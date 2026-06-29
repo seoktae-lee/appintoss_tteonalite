@@ -1,4 +1,7 @@
 import { useState, useCallback } from "react";
+import { getCurrentLocation, Accuracy, GetCurrentLocationPermissionError } from "@apps-in-toss/web-framework";
+
+const DEV_BYPASS = import.meta.env.VITE_DEV_BYPASS_AIT === "true";
 
 interface Location {
   lat: number;
@@ -10,25 +13,28 @@ export function useLocation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setError("위치 서비스를 사용할 수 없어요.");
-      return;
-    }
+  const getLocation = useCallback(async () => {
     setLoading(true);
     setError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLoading(false);
-      },
-      (err) => {
+
+    try {
+      if (DEV_BYPASS) {
+        setLocation({ lat: 37.5665, lng: 126.978 });
+        return;
+      }
+
+      const result = await getCurrentLocation({ accuracy: Accuracy.High });
+      setLocation({ lat: result.coords.latitude, lng: result.coords.longitude });
+    } catch (err) {
+      if (err instanceof GetCurrentLocationPermissionError) {
+        setError("위치 권한을 허용해주세요.");
+      } else {
         setError("위치를 가져올 수 없어요.");
-        setLoading(false);
-        console.error("[GPS]", err);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+      }
+      console.error("[GPS]", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   return { location, loading, error, getLocation };
