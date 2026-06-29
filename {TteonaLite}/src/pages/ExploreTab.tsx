@@ -72,7 +72,7 @@ export function ExploreTab({ onCourseDetail }: Props) {
               cursor: "pointer", fontFamily: "inherit",
               display: "flex", alignItems: "center", gap: 4,
             }}>
-              {m.key === "liked" && <img src={heartOrange} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />}
+              {m.key === "liked" && <img src={heartOrange} alt="" style={{ width: 18, height: 18, objectFit: "contain" }} />}
               {m.label}
             </button>
           ))}
@@ -125,7 +125,7 @@ export function ExploreTab({ onCourseDetail }: Props) {
                   <div style={{ display: "flex", gap: 10, fontSize: 12, color: "var(--g400)" }}>
                     <span>{course.authorNickname}</span>
                     <span>장소 {course.places.length}곳</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><img src={heartOrange} alt="" style={{ width: 12, height: 12 }} />{course.likeCount}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><img src={heartOrange} alt="" style={{ width: 16, height: 16 }} />{course.likeCount}</span>
                   </div>
                 </div>
               </div>

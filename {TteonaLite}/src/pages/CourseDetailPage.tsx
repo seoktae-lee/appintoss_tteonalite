@@ -216,7 +216,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
           display: "flex", alignItems: "center", gap: 4, border: "none", background: "none",
           color: course.isLiked ? "var(--or)" : "var(--g400)", cursor: "pointer", fontSize: 13,
         }}>
-          <img src={heartOrange} alt="" style={{ width: 16, height: 16, opacity: course.isLiked ? 1 : 0.3 }} />
+          <img src={heartOrange} alt="" style={{ width: 22, height: 22, opacity: course.isLiked ? 1 : 0.3 }} />
           {course.likeCount}
         </button>
       </div>
