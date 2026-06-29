@@ -208,7 +208,7 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
   if (isUploading) return <NaruLoading message="장소를 저장하는 중!" />;
   if (!location) return <NaruLoading message="위치를 찾고 있어!" />;
 
-  return (
+  return (<>
     <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* 상단 바 */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
@@ -597,22 +597,19 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
         </div>
       )}
 
-      {/* 장소 삭제 확인 */}
-      <ConfirmDialog
-        isOpen={!!removePlaceId}
-        title="이 장소를 삭제할까요?"
-        description="삭제하면 되돌릴 수 없어요."
-        confirmText="삭제"
-        cancelText="취소"
-        onConfirm={() => {
-          if (removePlaceId) {
-            onRemovePlace(removePlaceId);
-            hapticNotification();
-          }
-          setRemovePlaceId(null);
-        }}
-        onCancel={() => setRemovePlaceId(null)}
-      />
     </div>
+
+    <ConfirmDialog
+      open={!!removePlaceId}
+      title={<ConfirmDialog.Title>이 장소를 삭제할까요?</ConfirmDialog.Title>}
+      description={<ConfirmDialog.Description>삭제하면 되돌릴 수 없어요.</ConfirmDialog.Description>}
+      cancelButton={<ConfirmDialog.CancelButton onClick={() => setRemovePlaceId(null)}>취소</ConfirmDialog.CancelButton>}
+      confirmButton={<ConfirmDialog.ConfirmButton color="danger" onClick={() => {
+        if (removePlaceId) { onRemovePlace(removePlaceId); hapticNotification(); }
+        setRemovePlaceId(null);
+      }}>삭제</ConfirmDialog.ConfirmButton>}
+      onClose={() => setRemovePlaceId(null)}
+    />
+  </>
   );
 }

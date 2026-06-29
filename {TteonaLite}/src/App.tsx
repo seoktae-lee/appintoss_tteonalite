@@ -322,13 +322,12 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
     </div>
 
     <ConfirmDialog
-      isOpen={showWithdraw}
-      title="정말 탈퇴할까요?"
-      description="탈퇴하면 모든 코스와 데이터가 삭제되고 되돌릴 수 없어요."
-      confirmText="탈퇴하기"
-      cancelText="취소"
-      onConfirm={async () => { setShowWithdraw(false); await onLogout(); }}
-      onCancel={() => setShowWithdraw(false)}
+      open={showWithdraw}
+      title={<ConfirmDialog.Title>정말 탈퇴할까요?</ConfirmDialog.Title>}
+      description={<ConfirmDialog.Description>탈퇴하면 모든 코스와 데이터가 삭제되고 되돌릴 수 없어요.</ConfirmDialog.Description>}
+      cancelButton={<ConfirmDialog.CancelButton onClick={() => setShowWithdraw(false)}>취소</ConfirmDialog.CancelButton>}
+      confirmButton={<ConfirmDialog.ConfirmButton color="danger" onClick={async () => { setShowWithdraw(false); await onLogout(); }}>탈퇴하기</ConfirmDialog.ConfirmButton>}
+      onClose={() => setShowWithdraw(false)}
     />
   </>
   );

@@ -165,7 +165,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
 
   const photos = course.places.filter(p => p.photoUrl);
 
-  return (
+  return (<>
     <div style={{ minHeight: "100vh", paddingBottom: 90 }}>
       {/* 헤더 */}
       <div style={{
@@ -263,27 +263,25 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
         </div>
       )}
 
-      {/* 신고 다이얼로그 */}
-      <ConfirmDialog
-        isOpen={showReport}
-        title="이 코스를 신고할까요?"
-        description="부적절한 콘텐츠를 신고하면 검토 후 조치합니다."
-        confirmText="신고하기"
-        cancelText="취소"
-        onConfirm={handleReport}
-        onCancel={() => setShowReport(false)}
-      />
-
-      {/* 삭제 다이얼로그 */}
-      <ConfirmDialog
-        isOpen={showDelete}
-        title="이 코스를 삭제할까요?"
-        description="삭제하면 되돌릴 수 없어요."
-        confirmText="삭제"
-        cancelText="취소"
-        onConfirm={handleDelete}
-        onCancel={() => setShowDelete(false)}
-      />
     </div>
+
+    <ConfirmDialog
+      open={showReport}
+      title={<ConfirmDialog.Title>이 코스를 신고할까요?</ConfirmDialog.Title>}
+      description={<ConfirmDialog.Description>부적절한 콘텐츠를 신고하면 검토 후 조치합니다.</ConfirmDialog.Description>}
+      cancelButton={<ConfirmDialog.CancelButton onClick={() => setShowReport(false)}>취소</ConfirmDialog.CancelButton>}
+      confirmButton={<ConfirmDialog.ConfirmButton onClick={handleReport}>신고하기</ConfirmDialog.ConfirmButton>}
+      onClose={() => setShowReport(false)}
+    />
+
+    <ConfirmDialog
+      open={showDelete}
+      title={<ConfirmDialog.Title>이 코스를 삭제할까요?</ConfirmDialog.Title>}
+      description={<ConfirmDialog.Description>삭제하면 되돌릴 수 없어요.</ConfirmDialog.Description>}
+      cancelButton={<ConfirmDialog.CancelButton onClick={() => setShowDelete(false)}>취소</ConfirmDialog.CancelButton>}
+      confirmButton={<ConfirmDialog.ConfirmButton color="danger" onClick={handleDelete}>삭제</ConfirmDialog.ConfirmButton>}
+      onClose={() => setShowDelete(false)}
+    />
+  </>
   );
 }
