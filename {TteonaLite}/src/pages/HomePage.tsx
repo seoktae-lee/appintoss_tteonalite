@@ -5,6 +5,7 @@ import { hapticTap, hapticImpact } from "../hooks/useHaptic";
 import { api } from "../api/client";
 import type { TodaySession, Course } from "../api/types";
 import { NaruLoading } from "../components/NaruLoading";
+import tteoniWink from "../assets/mascot/tteoni-wink.png";
 import "leaflet/dist/leaflet.css";
 
 interface Props {
@@ -144,15 +145,24 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
           position: "absolute", top: 62, left: 16, right: 16, zIndex: 1000,
         }}>
           <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            background: "rgba(255,255,255,.92)", backdropFilter: "blur(8px)",
-            borderRadius: 12, padding: "8px 14px",
-            boxShadow: "0 2px 8px rgba(0,0,0,.06)",
+            display: "flex", alignItems: "center", gap: 10,
+            background: "rgba(255,255,255,.94)", backdropFilter: "blur(10px)",
+            borderRadius: 16, padding: "10px 16px 10px 10px",
+            boxShadow: "0 2px 12px rgba(0,0,0,.06)",
           }}>
-            <span style={{ fontSize: 20 }}>{weatherIcon}</span>
+            <div style={{
+              width: 44, height: 44, borderRadius: 12, background: "var(--or-100, #FFF0E6)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              overflow: "hidden",
+            }}>
+              <img src={tteoniWink} alt="" style={{ width: 40, height: 40, objectFit: "contain" }} />
+            </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--g900)", margin: 0 }}>
-                {weather.city} {weather.temperature}° · {weather.comment}
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--g900)", margin: 0 }}>
+                {weather.city} {weather.temperature}° {weatherIcon}
+              </p>
+              <p style={{ fontSize: 12, color: "var(--g500)", margin: "2px 0 0" }}>
+                {weather.comment}
               </p>
             </div>
           </div>
