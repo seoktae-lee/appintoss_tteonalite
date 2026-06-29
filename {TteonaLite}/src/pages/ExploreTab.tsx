@@ -22,26 +22,57 @@ interface Props {
   onCourseDetail: (id: string) => void;
 }
 
+type ViewMode = "explore" | "liked" | "bookmarked";
+
 export function ExploreTab({ onCourseDetail }: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("explore");
   const [loading, setLoading] = useState(true);
 
-  const loadCourses = async (tag?: string) => {
+  const loadCourses = async (tag?: string, mode?: ViewMode) => {
     setLoading(true);
     try {
-      const query = tag && tag !== "all" ? `?tag=${tag}` : "";
-      const res = await api.get<{ courses: Course[] }>(`/api/courses/explore${query}`);
-      setCourses(res.courses);
+      const currentMode = mode || viewMode;
+      if (currentMode === "explore") {
+        const query = tag && tag !== "all" ? `?tag=${tag}` : "";
+        const res = await api.get<{ courses: Course[] }>(`/api/courses/explore${query}`);
+        setCourses(res.courses);
+      } else {
+        const res = await api.get<{ courses: Course[] }>(`/api/courses/explore`);
+        if (currentMode === "liked") {
+          setCourses(res.courses.filter(c => c.isLiked));
+        } else {
+          setCourses(res.courses.filter(c => c.isBookmarked));
+        }
+      }
     } catch {} finally { setLoading(false); }
   };
 
-  useEffect(() => { loadCourses(selectedTag); }, [selectedTag]);
+  useEffect(() => { loadCourses(selectedTag, viewMode); }, [selectedTag, viewMode]);
 
   return (
     <div style={{ padding: "12px 0 100px" }}>
       <div style={{ padding: "0 20px 12px" }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>코스 탐색</h2>
+        {/* 뷰 모드 탭 */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+          {([
+            { key: "explore" as ViewMode, label: "전체" },
+            { key: "liked" as ViewMode, label: "❤ 좋아요" },
+            { key: "bookmarked" as ViewMode, label: "🔖 북마크" },
+          ]).map(m => (
+            <button key={m.key} onClick={() => setViewMode(m.key)} style={{
+              padding: "6px 14px", borderRadius: 100, fontSize: 13,
+              fontWeight: viewMode === m.key ? 700 : 500,
+              border: "none",
+              background: viewMode === m.key ? "var(--or)" : "var(--g100)",
+              color: viewMode === m.key ? "#fff" : "var(--g500)",
+              cursor: "pointer", fontFamily: "inherit",
+            }}>{m.label}</button>
+          ))}
+        </div>
+        {viewMode === "explore" && (
         <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
           {TAGS.map(t => (
             <button key={t.key} onClick={() => setSelectedTag(t.key)} style={{
@@ -53,6 +84,7 @@ export function ExploreTab({ onCourseDetail }: Props) {
             }}>{t.label}</button>
           ))}
         </div>
+        )}
       </div>
 
       {loading ? (
@@ -60,8 +92,12 @@ export function ExploreTab({ onCourseDetail }: Props) {
       ) : courses.length === 0 ? (
         <div style={{ textAlign: "center", padding: "40px 20px" }}>
           <img src={tteoniGuide} alt="" style={{ height: 100, opacity: 0.5, marginBottom: 12 }} />
-          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--g700)", marginBottom: 4 }}>아직 공개된 코스가 없어!</p>
-          <p style={{ fontSize: 13, color: "var(--g400)" }}>"나의 오늘"로 첫 코스를 만들어봐</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--g700)", marginBottom: 4 }}>
+            {viewMode === "liked" ? "좋아요한 코스가 없어!" : viewMode === "bookmarked" ? "북마크한 코스가 없어!" : "아직 공개된 코스가 없어!"}
+          </p>
+          <p style={{ fontSize: 13, color: "var(--g400)" }}>
+            {viewMode === "explore" ? "\"나의 오늘\"로 첫 코스를 만들어봐" : "탐색에서 마음에 드는 코스를 찾아봐"}
+          </p>
         </div>
       ) : (
         <div style={{ padding: "0 20px" }}>

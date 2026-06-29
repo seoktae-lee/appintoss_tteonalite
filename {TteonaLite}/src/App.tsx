@@ -270,7 +270,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
     );
   }
 
-  return (
+  return (<>
     <div style={{ minHeight: "100vh" }}>
       {tab === "home" && (
         <HomePage
@@ -323,17 +323,18 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
         </div>
       )}
       <BottomTabBar tab={tab} onTabChange={setTab} />
-
-      <ConfirmDialog
-        isOpen={showWithdraw}
-        title="정말 탈퇴할까요?"
-        description="탈퇴하면 모든 코스와 데이터가 삭제되고 되돌릴 수 없어요."
-        confirmText="탈퇴하기"
-        cancelText="취소"
-        onConfirm={() => { setShowWithdraw(false); onLogout(); }}
-        onCancel={() => setShowWithdraw(false)}
-      />
     </div>
+
+    <ConfirmDialog
+      isOpen={showWithdraw}
+      title="정말 탈퇴할까요?"
+      description="탈퇴하면 모든 코스와 데이터가 삭제되고 되돌릴 수 없어요."
+      confirmText="탈퇴하기"
+      cancelText="취소"
+      onConfirm={async () => { setShowWithdraw(false); await onLogout(); }}
+      onCancel={() => setShowWithdraw(false)}
+    />
+  </>
   );
 }
 
