@@ -27,7 +27,14 @@ function App() {
     const stored = localStorage.getItem("tteona_user");
     return stored ? (JSON.parse(stored) as User) : null;
   });
-  const [tab, setTab] = useState<AppTab>("home");
+  const [tab, setTab] = useState<AppTab>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get("tab");
+      if (t === "explore" || t === "settings") return t;
+    } catch {}
+    return "home";
+  });
   const [subPage, setSubPage] = useState<SubPage>("tabs");
 
   const handleLoginSuccess = (loggedInUser: LoginResponse["user"]) => {
