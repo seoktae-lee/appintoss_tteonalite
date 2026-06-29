@@ -105,26 +105,26 @@ export function CourseEditPage({ course, onStart, onBack }: Props) {
               </div>
 
               {/* 순서 변경 버튼 */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
                 <button onClick={() => moveUp(i)} disabled={i === 0} style={{
-                  width: 28, height: 28, border: "none", borderRadius: 6,
-                  background: i === 0 ? "var(--g100)" : "var(--g200)",
+                  width: 32, height: 32, border: "none", borderRadius: 8,
+                  background: i === 0 ? "var(--g100)" : "var(--or-100, #FFF0E6)",
                   cursor: i === 0 ? "default" : "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  opacity: i === 0 ? 0.4 : 1,
+                  opacity: i === 0 ? 0.3 : 1,
                 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--g600)" strokeWidth="2.5">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={i === 0 ? "var(--g400)" : "var(--or)"} strokeWidth="2.5">
                     <polyline points="18 15 12 9 6 15" />
                   </svg>
                 </button>
                 <button onClick={() => moveDown(i)} disabled={i === places.length - 1} style={{
-                  width: 28, height: 28, border: "none", borderRadius: 6,
-                  background: i === places.length - 1 ? "var(--g100)" : "var(--g200)",
+                  width: 32, height: 32, border: "none", borderRadius: 8,
+                  background: i === places.length - 1 ? "var(--g100)" : "var(--or-100, #FFF0E6)",
                   cursor: i === places.length - 1 ? "default" : "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  opacity: i === places.length - 1 ? 0.4 : 1,
+                  opacity: i === places.length - 1 ? 0.3 : 1,
                 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--g600)" strokeWidth="2.5">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={i === places.length - 1 ? "var(--g400)" : "var(--or)"} strokeWidth="2.5">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>

@@ -38,6 +38,7 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
   const mapInstance = useRef<any>(null);
 
   const [nextDistance, setNextDistance] = useState<string | null>(null);
+  const [nextDistanceMeters, setNextDistanceMeters] = useState<number | null>(null);
   const [nextPlaceName, setNextPlaceName] = useState<string | null>(null);
 
   function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -57,18 +58,21 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
   useEffect(() => {
     if (!location || !referencePlaces || referencePlaces.length === 0) {
       setNextDistance(null);
+      setNextDistanceMeters(null);
       setNextPlaceName(null);
       return;
     }
     const nextIdx = session.places.length;
     if (nextIdx >= referencePlaces.length) {
       setNextDistance(null);
+      setNextDistanceMeters(null);
       setNextPlaceName(null);
       return;
     }
     const next = referencePlaces[nextIdx];
     const dist = calcDistance(location.lat, location.lng, next.lat, next.lng);
     setNextDistance(formatDistance(dist));
+    setNextDistanceMeters(dist);
     setNextPlaceName(next.placeName || next.address.split(" ").slice(-2).join(" "));
   }, [location, session.places.length, referencePlaces]);
 
@@ -450,17 +454,29 @@ export function RecordingPage({ session, referencePlaces, onAddPlace, onRemovePl
 
       {/* 하단 버튼 */}
       <div style={{ padding: "12px 16px 24px", background: "#fff", display: "flex", gap: 10 }}>
-        <button onClick={() => { hapticImpact(); handleTakePhoto(); }} style={{
-          flex: 1, padding: 14, borderRadius: 100, border: "none",
-          background: "var(--or)", color: "#fff", fontSize: 15, fontWeight: 700,
-          cursor: "pointer", fontFamily: "inherit",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
-          </svg>
-          여기서 촬영
-        </button>
+        {(() => {
+          const nearEnough = !referencePlaces || nextDistanceMeters === null || nextDistanceMeters <= 500;
+          return (
+            <button
+              onClick={() => { if (nearEnough) { hapticImpact(); handleTakePhoto(); } }}
+              disabled={!nearEnough}
+              style={{
+                flex: 1, padding: 14, borderRadius: 100, border: "none",
+                background: nearEnough ? "var(--or)" : "var(--g200)",
+                color: nearEnough ? "#fff" : "var(--g400)",
+                fontSize: 15, fontWeight: 700,
+                cursor: nearEnough ? "pointer" : "default",
+                fontFamily: "inherit",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
+              </svg>
+              {nearEnough ? "여기서 촬영" : `${nextDistance} 남았어요`}
+            </button>
+          );
+        })()}
         {session.places.length > 0 && (
           <button onClick={() => {
             const today = new Date();

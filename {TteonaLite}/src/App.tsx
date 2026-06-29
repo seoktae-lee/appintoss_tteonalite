@@ -35,7 +35,8 @@ function App() {
     setUser(loggedInUser);
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
+    try { await api.delete("/api/auth/me"); } catch {}
     clearAuth();
     localStorage.removeItem("tteona_user");
     localStorage.removeItem("tteona_onboarding");
