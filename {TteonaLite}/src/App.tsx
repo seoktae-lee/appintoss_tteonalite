@@ -8,6 +8,7 @@ import { ExploreTab } from "./pages/ExploreTab";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
 import { CourseEditPage } from "./pages/CourseEditPage";
 import { ArchivePage } from "./pages/ArchivePage";
+import { ConfirmDialog } from "@toss/tds-mobile";
 import { BottomTabBar } from "./components/BottomTabBar";
 import { NaruLoading } from "./components/NaruLoading";
 import { useTodaySession } from "./hooks/useTodaySession";
@@ -79,6 +80,7 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [referencePlaces, setReferencePlaces] = useState<Place[] | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
 
   const loadCourses = async () => {
     try {
@@ -313,13 +315,23 @@ function LoggedInApp({ user, tab, setTab, subPage, setSubPage, onLogout }: Logge
             <BannerAdSlot adGroupId="ait.v2.live.da16d81ccaae48b3" />
           </div>
 
-          <button onClick={onLogout} style={{
+          <button onClick={() => setShowWithdraw(true)} style={{
             width: "100%", marginTop: 32, padding: 12, border: "none", background: "none",
             color: "var(--g400)", fontSize: 13, cursor: "pointer", textDecoration: "underline",
           }}>서비스 탈퇴</button>
         </div>
       )}
       <BottomTabBar tab={tab} onTabChange={setTab} />
+
+      <ConfirmDialog
+        isOpen={showWithdraw}
+        title="정말 탈퇴할까요?"
+        description="탈퇴하면 모든 코스와 데이터가 삭제되고 되돌릴 수 없어요."
+        confirmText="탈퇴하기"
+        cancelText="취소"
+        onConfirm={() => { setShowWithdraw(false); onLogout(); }}
+        onCancel={() => setShowWithdraw(false)}
+      />
     </div>
   );
 }
