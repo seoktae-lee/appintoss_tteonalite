@@ -25,6 +25,10 @@ app.use("/api/upload", uploadRouter);
 
 app.get("/health", (_req, res) => res.json({ status: "ok", app: "tteonalite" }));
 
+// 서버 시작 시 고아 코스 정리
+import { db as appDb } from "./db";
+appDb.cleanupOrphanedCourses();
+
 app.get("/api/weather", async (req, res) => {
   const lat = parseFloat(req.query.lat as string) || undefined;
   const lng = parseFloat(req.query.lng as string) || undefined;

@@ -144,6 +144,18 @@ export const db = {
     return session;
   },
 
+  cleanupOrphanedCourses() {
+    const data = load();
+    const userIds = new Set(data.users.map(u => u.id));
+    const before = data.courses.length;
+    data.courses = data.courses.filter(c => userIds.has(c.userId));
+    if (data.courses.length < before) {
+      save(data);
+      console.log(`[Cleanup] 고아 코스 ${before - data.courses.length}개 삭제`);
+    }
+    return before - data.courses.length;
+  },
+
   // ── Courses ──
   createCourse(course: CourseRecord) {
     const data = load();
