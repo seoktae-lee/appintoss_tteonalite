@@ -13,7 +13,7 @@ export function BannerAdSlot({ adGroupId }: { adGroupId: string }) {
     const attached = attachBanner(adGroupId, containerRef.current, {
       theme: "light",
       tone: "grey",
-      variant: "expanded",
+      variant: "card",
       callbacks: {
         onAdRendered: () => setAdFailed(false),
         onAdViewable: () => {},
