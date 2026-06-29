@@ -82,6 +82,45 @@ router.post("/today/finish", (req: AuthRequest, res: Response): void => {
     return;
   }
 
+  // 공개 코스 품질 체크
+  if (isPublic) {
+    const places = finished.places;
+
+    // 최소 2곳 이상
+    if (places.length < 2) {
+      res.status(400).json({ error: "공개 코스는 장소가 2곳 이상이어야 해요." });
+      return;
+    }
+
+    // 모든 장소에 사진 필수
+    if (places.some(p => !p.photoUrl)) {
+      res.status(400).json({ error: "공개 코스는 모든 장소에 사진이 필요해요." });
+      return;
+    }
+
+    // 장소 간 최소 100m 거리
+    for (let i = 1; i < places.length; i++) {
+      const R = 6371000;
+      const dLat = (places[i].lat - places[i - 1].lat) * Math.PI / 180;
+      const dLng = (places[i].lng - places[i - 1].lng) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(places[i - 1].lat * Math.PI / 180) * Math.cos(places[i].lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      if (dist < 100) {
+        res.status(400).json({ error: "공개 코스는 장소 간 100m 이상 떨어져야 해요." });
+        return;
+      }
+    }
+
+    // 같은 날 중복 공개 코스 방지
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const existing = db.getCoursesByUser(req.userId!);
+    const duplicateToday = existing.find(c => c.isPublic && c.createdAt.startsWith(todayStr));
+    if (duplicateToday) {
+      res.status(400).json({ error: "하루에 공개 코스는 1개만 등록할 수 있어요." });
+      return;
+    }
+  }
+
   const today = new Date();
   const defaultTitle = `${today.getMonth() + 1}월 ${today.getDate()}일 코스`;
 
