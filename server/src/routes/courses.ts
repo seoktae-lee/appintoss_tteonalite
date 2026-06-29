@@ -166,8 +166,8 @@ router.get("/:id", (req: AuthRequest, res: Response): void => {
 router.patch("/:id", (req: AuthRequest, res: Response): void => {
   const course = db.getCourseById(req.params.id);
   if (!course || course.userId !== req.userId) { res.status(403).json({ error: "권한이 없어요." }); return; }
-  const { title, tag, isPublic } = req.body;
-  db.updateCourse(req.params.id, { ...(title && { title }), ...(tag && { tag }), ...(isPublic !== undefined && { isPublic }) });
+  const { title, tag, isPublic, isAnonymous } = req.body;
+  db.updateCourse(req.params.id, { ...(title && { title }), ...(tag && { tag }), ...(isPublic !== undefined && { isPublic }), ...(isAnonymous !== undefined && { isAnonymous }) });
   res.json({ ok: true });
 });
 
