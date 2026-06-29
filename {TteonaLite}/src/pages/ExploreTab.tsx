@@ -4,6 +4,7 @@ import type { Course, CourseTag } from "../api/types";
 import tteoniGuide from "../assets/mascot/tteoni-guide.png";
 import { NaruLoading } from "../components/NaruLoading";
 import { BannerAdSlot } from "../components/BannerAdSlot";
+import heartOrange from "../assets/heart-orange.png";
 
 const TAGS: { key: CourseTag | "all"; label: string }[] = [
   { key: "all", label: "전체" },
@@ -59,7 +60,7 @@ export function ExploreTab({ onCourseDetail }: Props) {
         <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
           {([
             { key: "explore" as ViewMode, label: "전체" },
-            { key: "liked" as ViewMode, label: "❤ 좋아요" },
+            { key: "liked" as ViewMode, label: "좋아요" },
             { key: "bookmarked" as ViewMode, label: "🔖 북마크" },
           ]).map(m => (
             <button key={m.key} onClick={() => setViewMode(m.key)} style={{
@@ -69,7 +70,11 @@ export function ExploreTab({ onCourseDetail }: Props) {
               background: viewMode === m.key ? "var(--or)" : "var(--g100)",
               color: viewMode === m.key ? "#fff" : "var(--g500)",
               cursor: "pointer", fontFamily: "inherit",
-            }}>{m.label}</button>
+              display: "flex", alignItems: "center", gap: 4,
+            }}>
+              {m.key === "liked" && <img src={heartOrange} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />}
+              {m.label}
+            </button>
           ))}
         </div>
         {viewMode === "explore" && (
@@ -120,7 +125,7 @@ export function ExploreTab({ onCourseDetail }: Props) {
                   <div style={{ display: "flex", gap: 10, fontSize: 12, color: "var(--g400)" }}>
                     <span>{course.authorNickname}</span>
                     <span>장소 {course.places.length}곳</span>
-                    <span>❤ {course.likeCount}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><img src={heartOrange} alt="" style={{ width: 12, height: 12 }} />{course.likeCount}</span>
                   </div>
                 </div>
               </div>

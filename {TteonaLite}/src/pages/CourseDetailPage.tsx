@@ -3,6 +3,7 @@ import { ConfirmDialog } from "@toss/tds-mobile";
 import { api } from "../api/client";
 import type { Course } from "../api/types";
 import { NaruLoading } from "../components/NaruLoading";
+import heartOrange from "../assets/heart-orange.png";
 import "leaflet/dist/leaflet.css";
 
 const TAG_LABEL: Record<string, string> = {
@@ -215,9 +216,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
           display: "flex", alignItems: "center", gap: 4, border: "none", background: "none",
           color: course.isLiked ? "var(--or)" : "var(--g400)", cursor: "pointer", fontSize: 13,
         }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={course.isLiked ? "var(--or)" : "none"} stroke="currentColor" strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/>
-          </svg>
+          <img src={heartOrange} alt="" style={{ width: 16, height: 16, opacity: course.isLiked ? 1 : 0.3 }} />
           {course.likeCount}
         </button>
       </div>
