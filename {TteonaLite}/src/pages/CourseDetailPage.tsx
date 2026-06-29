@@ -257,7 +257,7 @@ export function CourseDetailPage({ courseId, onBack, onStartCourseNav }: Props) 
       }}>
         <p style={{ fontSize: 14, fontWeight: 600, color: "var(--or-d)", marginBottom: 4 }}>영상으로 더 멋지게 기록하고 싶다면?</p>
         <p style={{ fontSize: 12, color: "var(--g500)", marginBottom: 10 }}>떠나 앱에서 자동 Vlog를 만들어봐!</p>
-        <button style={{
+        <button onClick={() => window.open("https://apps.apple.com/kr/app/%EB%96%A0%EB%82%98/id6767218543", "_blank")} style={{
           padding: "8px 20px", borderRadius: 100, border: "none",
           background: "var(--or)", color: "#fff", fontSize: 13, fontWeight: 600,
           cursor: "pointer", fontFamily: "inherit",

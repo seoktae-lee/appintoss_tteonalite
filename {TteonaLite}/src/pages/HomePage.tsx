@@ -4,7 +4,7 @@ import { useWeather } from "../hooks/useWeather";
 import { hapticTap, hapticImpact } from "../hooks/useHaptic";
 import { api } from "../api/client";
 import type { TodaySession, Course } from "../api/types";
-import tteoniGuide from "../assets/mascot/tteoni-guide.png";
+import { NaruLoading } from "../components/NaruLoading";
 import "leaflet/dist/leaflet.css";
 
 interface Props {
@@ -87,14 +87,7 @@ export function HomePage({ nickname, session, courses, onStartRecording, onResum
     <div style={{ position: "relative", height: "calc(100vh - 82px)" }}>
       {/* 지도 */}
       <div ref={mapRef} style={{ position: "absolute", inset: 0 }}>
-        {!location && (
-          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#E8F0E0" }}>
-            <div style={{ textAlign: "center" }}>
-              <img src={tteoniGuide} alt="" style={{ height: 80, opacity: 0.6 }} />
-              <p style={{ color: "var(--g400)", fontSize: 13, marginTop: 8 }}>위치를 가져오는 중...</p>
-            </div>
-          </div>
-        )}
+        {!location && <NaruLoading message="위치를 가져오는 중!" />}
       </div>
 
       {/* 검색바 (플로팅) */}
